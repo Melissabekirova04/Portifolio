@@ -1,16 +1,19 @@
 <!DOCTYPE html>
 <html lang="en" dir="auto" data-theme="auto">
 
-<head>
-	<meta name="generator" content="Hugo 0.165.0"><script src="/Portifolio/livereload.js?mindelay=10&amp;v=2&amp;port=1313&amp;path=Portifolio/livereload" data-no-instant defer></script><meta charset="utf-8">
+<head><script src="/Portifolio/livereload.js?mindelay=10&amp;v=2&amp;port=1313&amp;path=Portifolio/livereload" data-no-instant defer></script><meta charset="utf-8">
 <meta http-equiv="X-UA-Compatible" content="IE=edge">
 <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
 <meta name="robots" content="noindex, nofollow">
-<title>Melissa Bekirova | Developer Portfolio</title>
-
-<meta name="description" content="Min developer portfolio - Travel Planner">
+<title>Week 3 - Data Integration &amp; External API | Melissa Bekirova | Developer Portfolio</title>
+<meta name="keywords" content="">
+<meta name="description" content="What did I work on this week?
+This week I focused on data integration in my Travel Planner project.
+The goal was to integrate an external API into the Java backend and use external data as part of the application.
+I chose to integrate weather data because weather information is useful when planning a trip.
+The Travel Planner can now fetch current weather information for supported airport cities in Scandinavia.">
 <meta name="author" content="Melissa Bekirova">
-<link rel="canonical" href="http://localhost:1313/Portifolio/">
+<link rel="canonical" href="http://localhost:1313/Portifolio/posts/week-03/">
 <link crossorigin="anonymous" href="/Portifolio/assets/css/stylesheet.cd9298b33628769aa1bc1acebbbfd7aa11ce81dfe03484d479e1907760249a1d.css" integrity="sha256-zZKYszYodpqhvBrOu7/XqhHOgd/gNITUeeGQd2Akmh0=" rel="preload stylesheet" as="style">
 <link rel="icon" href="http://localhost:1313/Portifolio/favicon.ico">
 <link rel="icon" type="image/png" sizes="16x16" href="http://localhost:1313/Portifolio/favicon-16x16.png">
@@ -19,8 +22,7 @@
 <link rel="mask-icon" href="http://localhost:1313/Portifolio/safari-pinned-tab.svg">
 <meta name="theme-color" content="#2e2e33">
 <meta name="msapplication-TileColor" content="#2e2e33">
-<link rel="alternate" type="application/rss+xml" href="http://localhost:1313/Portifolio/index.xml" title="rss">
-<link rel="alternate" hreflang="en" href="http://localhost:1313/Portifolio/">
+<link rel="alternate" hreflang="en" href="http://localhost:1313/Portifolio/posts/week-03/">
 <noscript>
     <style>
         #theme-toggle,
@@ -68,7 +70,7 @@
 
 </script>
 </head>
-<body class="list" id="top">
+<body id="top">
     <header class="header">
     <nav class="header-nav">
         <div class="logo">
@@ -116,39 +118,80 @@
         </ul>
     </nav>
 </header>
-<main class="main"> 
-<article class="first-entry home-info">
-    <header class="entry-header">
-        <h1>Developer Portfolio</h1>
-    </header>
-    <div class="entry-content md-content">
-        
-        <p>Her dokumenterer jeg udviklingen af mit Travel Planner-projekt gennem 3. semester.</p>
+<main class="main">
 
-    </div>
-    <footer class="entry-footer">
-        <div class="social-icons" >
+<article class="post-single">
+  <header class="post-header">
+    <nav class="breadcrumbs" role="navigation" aria-label="Breadcrumb">
+            <a href="/Portifolio/">Home</a>
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                stroke-linecap="round" stroke-linejoin="round" class="feather feather-chevron-right">
+                <polyline points="9 18 15 12 9 6"></polyline>
+            </svg>
+            <a href="/Portifolio/posts/">Posts</a>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+        stroke-linecap="round" stroke-linejoin="round" class="feather feather-chevron-right">
+        <polyline points="9 18 15 12 9 6"></polyline>
+    </svg>
+</nav>
+    <h1 class="post-title entry-hint-parent">
+      Week 3 - Data Integration &amp; External API
+    </h1>
+    <div class="post-meta">
+
+<span title='2026-09-04 00:00:00 +0000 UTC'>4. september 2026</span>&nbsp;·&nbsp;<span>2 min</span>&nbsp;·&nbsp;<span>Melissa Bekirova</span>
+
 </div>
+  </header> 
+  <div class="post-content md-content"><h2 id="what-did-i-work-on-this-week">What did I work on this week?<a hidden class="anchor" aria-hidden="true" href="#what-did-i-work-on-this-week">#</a></h2>
+<p>This week I focused on data integration in my Travel Planner project.</p>
+<p>The goal was to integrate an external API into the Java backend and use external data as part of the application.</p>
+<p>I chose to integrate weather data because weather information is useful when planning a trip.</p>
+<p>The Travel Planner can now fetch current weather information for supported airport cities in Scandinavia.</p>
+<h2 id="external-api">External API<a hidden class="anchor" aria-hidden="true" href="#external-api">#</a></h2>
+<p>For the weather integration, I used the Open-Meteo API.</p>
+<p>The API allows my backend to request current weather data using latitude and longitude.</p>
+<p>The application currently retrieves:</p>
+<ul>
+<li>Temperature</li>
+<li>Wind speed</li>
+<li>Weather code</li>
+</ul>
+<p>The weather code is converted into a more understandable description inside the application.</p>
+<h2 id="application-structure">Application Structure<a hidden class="anchor" aria-hidden="true" href="#application-structure">#</a></h2>
+<p>I separated the weather functionality into different layers so each class has a clear responsibility.</p>
+<h3 id="weatherapiclient">WeatherApiClient<a hidden class="anchor" aria-hidden="true" href="#weatherapiclient">#</a></h3>
+<p><code>WeatherApiClient</code> is responsible for communicating with the external Open-Meteo API.</p>
+<p>It:</p>
+<ul>
+<li>Creates the API request</li>
+<li>Sends the HTTP request</li>
+<li>Receives the JSON response</li>
+<li>Uses Jackson to read the response</li>
+</ul>
+<h3 id="weatherservice">WeatherService<a hidden class="anchor" aria-hidden="true" href="#weatherservice">#</a></h3>
+<p><code>WeatherService</code> contains the logic for the weather functionality.</p>
+<p>It is responsible for:</p>
+<ul>
+<li>Managing the supported Scandinavian airport cities</li>
+<li>Storing their coordinates</li>
+<li>Calling <code>WeatherApiClient</code></li>
+<li>Processing the weather data</li>
+<li>Converting weather codes into readable descriptions</li>
+</ul>
+<h3 id="weathercontroller">WeatherController<a hidden class="anchor" aria-hidden="true" href="#weathercontroller">#</a></h3>
+<p><code>WeatherController</code> exposes the weather functionality through REST endpoints using Javalin.</p>
+<p>One endpoint returns weather information for all supported airports:</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;-webkit-text-size-adjust:none;"><code class="language-text" data-lang="text"><span style="display:flex;"><span>GET /api/weather/airports/CPH
+</span></span></code></pre></div>
 
-    </footer>
-</article>
-
-<article class="post-entry"> 
-  <header class="entry-header">
-    <h2 class="entry-hint-parent">Week 3 - Data Integration &amp; External API
-    </h2>
-  </header>
-  <div class="entry-content">
-    <p>What did I work on this week? This week I focused on data integration in my Travel Planner project.
-The goal was to integrate an external API into the Java backend and use external data as part of the application.
-I chose to integrate weather data because weather information is useful when planning a trip.
-The Travel Planner can now fetch current weather information for supported airport cities in Scandinavia.
-...</p>
   </div>
-  <footer class="entry-footer">
 
-<span title='2026-09-04 00:00:00 +0000 UTC'>4. september 2026</span>&nbsp;·&nbsp;<span>2 min</span>&nbsp;·&nbsp;<span>Melissa Bekirova</span></footer>
-  <a class="entry-link" aria-label="post link to Week 3 - Data Integration & External API" href="http://localhost:1313/Portifolio/posts/week-03/"></a>
+  <footer class="post-footer">
+    <ul class="post-tags">
+    </ul>
+
+  </footer>
 </article>
     </main>
     
@@ -229,6 +272,53 @@ The Travel Planner can now fetch current weather information for supported airpo
         }
     })
 
+</script>
+<script>
+    document.querySelectorAll('pre > code').forEach((codeblock) => {
+        const container = codeblock.parentNode.parentNode;
+
+        const copybutton = document.createElement('button');
+        copybutton.classList.add('copy-code');
+        copybutton.innerHTML = 'copy';
+
+        function copyingDone() {
+            copybutton.innerHTML = 'copied!';
+            setTimeout(() => {
+                copybutton.innerHTML = 'copy';
+            }, 2000);
+        }
+
+        copybutton.addEventListener('click', (cb) => {
+            if ('clipboard' in navigator) {
+                navigator.clipboard.writeText(codeblock.textContent);
+                copyingDone();
+                return;
+            }
+
+            const range = document.createRange();
+            range.selectNodeContents(codeblock);
+            const selection = window.getSelection();
+            selection.removeAllRanges();
+            selection.addRange(range);
+            try {
+                document.execCommand('copy');
+                copyingDone();
+            } catch (e) { };
+            selection.removeRange(range);
+        });
+
+        if (container.classList.contains("highlight")) {
+            container.appendChild(copybutton);
+        } else if (container.parentNode.firstChild == container) {
+            
+        } else if (codeblock.parentNode.parentNode.parentNode.parentNode.parentNode.nodeName == "TABLE") {
+            
+            codeblock.parentNode.parentNode.parentNode.parentNode.parentNode.appendChild(copybutton);
+        } else {
+            
+            codeblock.parentNode.appendChild(copybutton);
+        }
+    });
 </script>
 </body>
 
