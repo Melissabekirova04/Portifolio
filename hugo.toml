@@ -1,0 +1,28 @@
+baseURL = 'https://melissabekirova04.github.io/Portifolio/'
+languageCode = 'da-dk'
+title = 'Melissa Bekirova | Developer Portfolio'
+theme = 'PaperMod'
+
+[params]
+  description = 'Min developer portfolio - Travel Planner'
+  author = 'Melissa Bekirova'
+  ShowReadingTime = true
+  ShowPostNavLinks = true
+  ShowBreadCrumbs = true
+  ShowCodeCopyButtons = true
+
+[params.homeInfoParams]
+  Title = 'Developer Portfolio'
+  Content = 'Her dokumenterer jeg udviklingen af mit Travel Planner-projekt gennem 3. semester.'
+
+[[menu.main]]
+  identifier = 'posts'
+  name = 'Portfolio'
+  url = '/posts/'
+  weight = 10
+
+[[menu.main]]
+  identifier = 'github'
+  name = 'GitHub'
+  url = 'https://github.com/Melissabekirova04/Portifolio'
+  weight = 20
