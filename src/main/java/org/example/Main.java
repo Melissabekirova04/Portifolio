@@ -1,22 +1,24 @@
 package org.example;
 
 import io.javalin.Javalin;
+import org.example.config.HibernateConfig;
 import org.example.controller.WeatherController;
 
 public class Main {
 
     public static void main(String[] args) {
 
-        // Starter vores Javalin server
+        // Opretter forbindelsen til PostgreSQL og registrerer User-tabellen
+        HibernateConfig.getEntityManagerFactory();
+
+        // Starter Javalin-serveren
         Javalin app = Javalin.create().start(7070);
 
-        // Opretter vores weather controller
+        // Beholder dine eksisterende weather endpoints
         WeatherController weatherController = new WeatherController();
-
-        // Registrerer weather endpoints
         weatherController.registerRoutes(app);
 
-        // Simpelt endpoint til at kontrollere at API'et kører
+        // Kontrollerer, at API'et kører
         app.get("/", ctx ->
                 ctx.result("Travel Planner API is running!")
         );
