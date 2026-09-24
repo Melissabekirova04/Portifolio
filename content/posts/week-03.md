@@ -62,4 +62,4 @@ It is responsible for:
 One endpoint returns weather information for all supported airports:
 
 ```text
-GET /api/weather/airports/CPH
+GET /api/weather/airports/CPH                                                                                                                          cvc     
