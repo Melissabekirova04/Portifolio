@@ -1,65 +1,34 @@
 ---
-title: "Week 3 - Data Integration & External API"
-date: 2026-09-04
+title: "Week 3 – Data Integration & External API"
+weight: 5
 draft: false
+summary: "Integrating weather information from Open-Meteo into Travel Planner."
 ---
 
-## What did I work on this week?
+## Topic and Project Connection
 
-This week I focused on data integration in my Travel Planner project.
+Data integration connects my backend with information from an external service.
 
-The goal was to integrate an external API into the Java backend and use external data as part of the application.
-
-I chose to integrate weather data because weather information is useful when planning a trip.
-
-The Travel Planner can now fetch current weather information for supported airport cities in Scandinavia.
+For Travel Planner, I chose weather information because it can help users prepare for a trip. The weather functionality retrieves current weather for supported airport cities in Scandinavia.
 
 ## External API
 
-For the weather integration, I used the Open-Meteo API.
+The integration uses the Open-Meteo API. Requests use latitude and longitude to retrieve temperature, wind speed and a weather code.
 
-The API allows my backend to request current weather data using latitude and longitude.
-
-The application currently retrieves:
-
-- Temperature
-- Wind speed
-- Weather code
-
-The weather code is converted into a more understandable description inside the application.
+The weather code is converted into a readable description inside the application.
 
 ## Application Structure
 
-I separated the weather functionality into different layers so each class has a clear responsibility.
+WeatherApiClient communicates with the external API and reads the JSON response using Jackson.
 
-### WeatherApiClient
+WeatherService manages the supported airport cities and their coordinates. It also processes the weather information and converts weather codes into descriptions.
 
-`WeatherApiClient` is responsible for communicating with the external Open-Meteo API.
+WeatherController exposes the functionality through Javalin endpoints.
 
-It:
+## Reflection
 
-- Creates the API request
-- Sends the HTTP request
-- Receives the JSON response
-- Uses Jackson to read the response
+This feature helped me understand how external data becomes part of a backend application.
 
-### WeatherService
+Separating the client, service and controller makes it easier to see where HTTP communication, application logic and endpoint handling belong.
 
-`WeatherService` contains the logic for the weather functionality.
-
-It is responsible for:
-
-- Managing the supported Scandinavian airport cities
-- Storing their coordinates
-- Calling `WeatherApiClient`
-- Processing the weather data
-- Converting weather codes into readable descriptions
-
-### WeatherController
-
-`WeatherController` exposes the weather functionality through REST endpoints using Javalin.
-
-One endpoint returns weather information for all supported airports:
-
-```text
-GET /api/weather/airports/CPH                                                                                                                          cvc     
+The integration also introduces a dependency on another service. Improving how the backend handles unavailable services and unexpected responses is a next step.

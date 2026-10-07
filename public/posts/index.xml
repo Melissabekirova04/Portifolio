@@ -5,19 +5,56 @@
     <link>http://localhost:1313/Portifolio/posts/</link>
     <description>Recent content in Posts on Melissa Bekirova | Developer Portfolio</description>
     <generator>Hugo</generator>
-    <language>da-dk</language>
-    <lastBuildDate>Fri, 04 Sep 2026 00:00:00 +0000</lastBuildDate>
+    <language>da-DK</language>
     <atom:link href="http://localhost:1313/Portifolio/posts/index.xml" rel="self" type="application/rss+xml" />
     <item>
-      <title>Week 3 - Data Integration &amp; External API</title>
+      <title>Week 7 – REST &amp; Test</title>
+      <link>http://localhost:1313/Portifolio/posts/week-07/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      <guid>http://localhost:1313/Portifolio/posts/week-07/</guid>
+      <description>Manually testing authentication and identifying the next test cases.</description>
+    </item>
+    <item>
+      <title>Week 6 – REST I</title>
+      <link>http://localhost:1313/Portifolio/posts/week-06/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      <guid>http://localhost:1313/Portifolio/posts/week-06/</guid>
+      <description>Implementing registration, login and protected endpoints with Javalin.</description>
+    </item>
+    <item>
+      <title>Week 5 – SP1 &amp; Project Structure</title>
+      <link>http://localhost:1313/Portifolio/posts/week-05/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      <guid>http://localhost:1313/Portifolio/posts/week-05/</guid>
+      <description>Connecting the semester topics to the structure and scope of Travel Planner.</description>
+    </item>
+    <item>
+      <title>Week 4 – Concurrency</title>
+      <link>http://localhost:1313/Portifolio/posts/week-04/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      <guid>http://localhost:1313/Portifolio/posts/week-04/</guid>
+      <description>Considering concurrent requests and shared resources in the backend.</description>
+    </item>
+    <item>
+      <title>Week 3 – Data Integration &amp; External API</title>
       <link>http://localhost:1313/Portifolio/posts/week-03/</link>
-      <pubDate>Fri, 04 Sep 2026 00:00:00 +0000</pubDate>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
       <guid>http://localhost:1313/Portifolio/posts/week-03/</guid>
-      <description>&lt;h2 id=&#34;what-did-i-work-on-this-week&#34;&gt;What did I work on this week?&lt;/h2&gt;
-&lt;p&gt;This week I focused on data integration in my Travel Planner project.&lt;/p&gt;
-&lt;p&gt;The goal was to integrate an external API into the Java backend and use external data as part of the application.&lt;/p&gt;
-&lt;p&gt;I chose to integrate weather data because weather information is useful when planning a trip.&lt;/p&gt;
-&lt;p&gt;The Travel Planner can now fetch current weather information for supported airport cities in Scandinavia.&lt;/p&gt;</description>
+      <description>Integrating weather information from Open-Meteo into Travel Planner.</description>
+    </item>
+    <item>
+      <title>Week 2 – JPA II</title>
+      <link>http://localhost:1313/Portifolio/posts/week-02/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      <guid>http://localhost:1313/Portifolio/posts/week-02/</guid>
+      <description>Connecting Hibernate to PostgreSQL and separating database access.</description>
+    </item>
+    <item>
+      <title>Week 1 – JPA I</title>
+      <link>http://localhost:1313/Portifolio/posts/week-01/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      <guid>http://localhost:1313/Portifolio/posts/week-01/</guid>
+      <description>Introducing database persistence and the foundation of Travel Planner.</description>
     </item>
   </channel>
 </rss>

@@ -1,0 +1,49 @@
+{{ define "main" }}
+<div class="portfolio-home">
+
+    <section class="portfolio-intro">
+        <p class="portfolio-eyebrow">COMPUTER SCIENCE STUDENT · JAVA BACKEND</p>
+        <h1>Hi, I'm Melissa 👋</h1>
+        <p>
+            I'm studying computer science and working with Java,
+            databases and web development. Explore my projects
+            to learn about the features, technical decisions
+            and challenges along the way.
+        </p>
+        <div class="portfolio-actions">
+            <a class="portfolio-button" href="{{ "projects/" | relURL }}">
+            Explore my projects
+            </a>
+        </div>
+    </section>
+
+    <section class="portfolio-section">
+        <div class="portfolio-section-heading">
+            <p class="portfolio-eyebrow">SELECTED WORK</p>
+            <h2>My projects</h2>
+            <p>
+                Choose a project to read about its features,
+                technologies and development.
+            </p>
+        </div>
+
+        <div class="project-grid">
+            {{ with .Site.GetPage "/projects" }}
+            {{ range .Pages.ByWeight }}
+            <a class="project-card" href="{{ .RelPermalink }}">
+                    <span class="project-card-tag">
+                        {{ .Params.category }}
+                    </span>
+                <h3>{{ .Title }}</h3>
+                <p>{{ .Params.summary }}</p>
+                <span class="project-card-link">
+                        Explore project →
+                    </span>
+            </a>
+            {{ end }}
+            {{ end }}
+        </div>
+    </section>
+
+</div>
+{{ end }}

@@ -2,16 +2,33 @@
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"
   xmlns:xhtml="http://www.w3.org/1999/xhtml">
   <url>
-    <loc>http://localhost:1313/Portifolio/</loc>
-    <lastmod>2026-09-04T00:00:00+00:00</lastmod>
+    <loc>http://localhost:1313/Portifolio/projects/travel-planner/</loc>
   </url><url>
-    <loc>http://localhost:1313/Portifolio/posts/</loc>
-    <lastmod>2026-09-04T00:00:00+00:00</lastmod>
+    <loc>http://localhost:1313/Portifolio/posts/week-07/</loc>
+  </url><url>
+    <loc>http://localhost:1313/Portifolio/projects/cupcake/</loc>
+  </url><url>
+    <loc>http://localhost:1313/Portifolio/posts/week-06/</loc>
+  </url><url>
+    <loc>http://localhost:1313/Portifolio/projects/fog-carport/</loc>
+  </url><url>
+    <loc>http://localhost:1313/Portifolio/posts/week-05/</loc>
+  </url><url>
+    <loc>http://localhost:1313/Portifolio/posts/week-04/</loc>
   </url><url>
     <loc>http://localhost:1313/Portifolio/posts/week-03/</loc>
-    <lastmod>2026-09-04T00:00:00+00:00</lastmod>
+  </url><url>
+    <loc>http://localhost:1313/Portifolio/posts/week-02/</loc>
+  </url><url>
+    <loc>http://localhost:1313/Portifolio/posts/week-01/</loc>
   </url><url>
     <loc>http://localhost:1313/Portifolio/categories/</loc>
+  </url><url>
+    <loc>http://localhost:1313/Portifolio/</loc>
+  </url><url>
+    <loc>http://localhost:1313/Portifolio/posts/</loc>
+  </url><url>
+    <loc>http://localhost:1313/Portifolio/projects/</loc>
   </url><url>
     <loc>http://localhost:1313/Portifolio/tags/</loc>
   </url>
