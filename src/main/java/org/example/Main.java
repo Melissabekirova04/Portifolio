@@ -4,6 +4,7 @@ import io.javalin.Javalin;
 import org.example.config.HibernateConfig;
 import org.example.controller.AuthController;
 import org.example.controller.DestinationController;
+import org.example.controller.DestinationInspirationController;
 import org.example.controller.TripController;
 import org.example.controller.WeatherController;
 
@@ -17,20 +18,25 @@ public class Main {
         // Starter serveren
         Javalin app = Javalin.create().start(7070);
 
-        // Registrerer weather endpoints
+        // Vejr
         WeatherController weatherController = new WeatherController();
         weatherController.registerRoutes(app);
 
-        // Registrerer opret konto, login og logout
+        // Opret konto, login og logout
         AuthController authController = new AuthController();
         authController.registerRoutes(app);
 
-        // Registrerer destinationssøgning og rejsekladde
+        // Destinationer, flysøgning og rejsekladde
         DestinationController destinationController =
                 new DestinationController();
         destinationController.registerRoutes(app);
 
-        // Registrerer gem og hent rejser fra databasen
+        // Beskrivelser, billeder og populære områder
+        DestinationInspirationController inspirationController =
+                new DestinationInspirationController();
+        inspirationController.registerRoutes(app);
+
+        // Gem og hent rejser fra databasen
         TripController tripController = new TripController();
         tripController.registerRoutes(app);
 
