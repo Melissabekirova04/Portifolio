@@ -3,6 +3,7 @@ package org.example.config;
 import jakarta.persistence.EntityManagerFactory;
 import org.example.entity.User;
 import org.hibernate.cfg.Configuration;
+import org.example.entity.Trip;
 
 public class HibernateConfig {
 
@@ -26,6 +27,7 @@ public class HibernateConfig {
 
             emf = new Configuration()
                     .addAnnotatedClass(User.class)
+                    .addAnnotatedClass(Trip.class)
                     .setProperty("hibernate.connection.driver_class", "org.postgresql.Driver")
                     .setProperty("hibernate.connection.url", url)
                     .setProperty("hibernate.connection.username", username)
