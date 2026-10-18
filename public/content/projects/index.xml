@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+	<channel>
+		<title>Projekter on </title>
+		<link>//localhost:1313/content/projects/</link>
+		<description>Recent content in Projekter on </description>
+		<generator>Hugo</generator>
+		<language>en</language>
+		
+		
+		
+		
+			<atom:link href="//localhost:1313/content/projects/index.xml" rel="self" type="application/rss+xml" />
+			<item>
+				<title>Travel Planner API</title>
+				<link>//localhost:1313/content/projects/travel-planner/</link>
+				<pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+				<guid>//localhost:1313/content/projects/travel-planner/</guid>
+				<description>Et Java backendprojekt til planlægning af rejser med vejrdata, brugerkonti og en PostgreSQL-database.</description>
+			</item>
+			<item>
+				<title>Cupcake webshop</title>
+				<link>//localhost:1313/content/projects/cupcake/</link>
+				<pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+				<guid>//localhost:1313/content/projects/cupcake/</guid>
+				<description>En webshop, hvor kunder kan sammensætte cupcakes og afgive ordrer.</description>
+			</item>
+			<item>
+				<title>FOG Carport</title>
+				<link>//localhost:1313/content/projects/fog-carport/</link>
+				<pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+				<guid>//localhost:1313/content/projects/fog-carport/</guid>
+				<description>Et system til carportbestillinger med kunde- og medarbejderfunktioner.</description>
+			</item>
+	</channel>
+</rss>
