@@ -6,12 +6,14 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import io.javalin.Javalin;
 import io.javalin.http.BadRequestResponse;
-import io.javalin.http.Context;
 import io.javalin.http.NotFoundResponse;
-import io.javalin.http.UnauthorizedResponse;
 import org.example.dao.TripDAO;
 import org.example.entity.Trip;
+import org.example.security.SecurityMiddleware;
 
+import java.time.LocalDate;
+import java.time.ZoneId;
+import java.time.format.DateTimeParseException;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -22,21 +24,23 @@ public class TripController {
 
     public void registerRoutes(Javalin app) {
 
-        // Gem den aktuelle rejsekladde i databasen.
+        // Gem rejsekladden på den bruger, som JWT-tokenet tilhører.
         app.post("/api/trips", ctx -> {
-            Long userId = requireUserId(ctx);
+            Long userId = SecurityMiddleware.requireUserId(ctx);
 
             Object destination =
                     ctx.sessionAttribute("tripDestination");
 
             if (destination == null) {
                 throw new BadRequestResponse(
-                        "Du skal vælge en destination først"
+                        "Du skal vælge en destination først."
                 );
             }
 
             Object search = ctx.sessionAttribute("flightSearch");
             Object flight = ctx.sessionAttribute("selectedFlight");
+
+            validateDates(search);
 
             Trip trip = tripDAO.create(
                     userId,
@@ -45,7 +49,7 @@ public class TripController {
                     toJsonOrNull(flight)
             );
 
-            // Kladden ryddes, når rejsen er gemt.
+            // Ryd først kladden, når rejsen er gemt.
             ctx.sessionAttribute("tripDestination", null);
             ctx.sessionAttribute("flightSearch", null);
             ctx.sessionAttribute("flightOffers", null);
@@ -54,9 +58,9 @@ public class TripController {
             ctx.status(201).json(toResponse(trip));
         });
 
-        // Hent alle rejser for den indloggede bruger.
+        // Hent den indloggede brugers rejser.
         app.get("/api/trips", ctx -> {
-            Long userId = requireUserId(ctx);
+            Long userId = SecurityMiddleware.requireUserId(ctx);
 
             List<ObjectNode> response = new ArrayList<>();
 
@@ -69,28 +73,59 @@ public class TripController {
 
         // Hent én rejse, hvis den tilhører brugeren.
         app.get("/api/trips/{id}", ctx -> {
-            Long userId = requireUserId(ctx);
+            Long userId = SecurityMiddleware.requireUserId(ctx);
             Long tripId = parseTripId(ctx.pathParam("id"));
 
             Trip trip = tripDAO.findByIdAndUserId(tripId, userId)
                     .orElseThrow(() -> new NotFoundResponse(
-                            "Rejsen findes ikke"
+                            "Rejsen findes ikke."
                     ));
 
             ctx.json(toResponse(trip));
         });
     }
 
-    private Long requireUserId(Context ctx) {
-        Long userId = ctx.sessionAttribute("userId");
-
-        if (userId == null) {
-            throw new UnauthorizedResponse(
-                    "Du skal logge ind først"
+    private void validateDates(Object search) {
+        if (search == null) {
+            throw new BadRequestResponse(
+                    "Du skal vælge startdato og slutdato, "
+                            + "før rejsen gemmes."
             );
         }
 
-        return userId;
+        JsonNode searchData = mapper.valueToTree(search);
+
+        LocalDate startDate;
+        LocalDate endDate;
+
+        try {
+            startDate = LocalDate.parse(
+                    searchData.path("departureDate").asText()
+            );
+
+            endDate = LocalDate.parse(
+                    searchData.path("returnDate").asText()
+            );
+
+        } catch (DateTimeParseException e) {
+            throw new BadRequestResponse(
+                    "Rejsen skal have gyldige start- og slutdatoer."
+            );
+        }
+
+        if (!endDate.isAfter(startDate)) {
+            throw new BadRequestResponse(
+                    "Slutdatoen skal ligge efter startdatoen."
+            );
+        }
+
+        if (startDate.isBefore(
+                LocalDate.now(ZoneId.of("Europe/Copenhagen"))
+        )) {
+            throw new BadRequestResponse(
+                    "Startdatoen må ikke være i fortiden."
+            );
+        }
     }
 
     private Long parseTripId(String value) {
@@ -102,9 +137,10 @@ public class TripController {
             }
 
             return id;
+
         } catch (NumberFormatException e) {
             throw new BadRequestResponse(
-                    "Rejsens ID skal være et positivt heltal"
+                    "Rejsens ID skal være et positivt heltal."
             );
         }
     }
@@ -125,6 +161,7 @@ public class TripController {
 
     private ObjectNode toResponse(Trip trip)
             throws JsonProcessingException {
+
         ObjectNode response = mapper.createObjectNode();
 
         response.put("id", trip.getId());

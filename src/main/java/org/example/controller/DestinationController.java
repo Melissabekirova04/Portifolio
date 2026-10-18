@@ -5,6 +5,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import io.javalin.Javalin;
 import io.javalin.http.BadGatewayResponse;
 import io.javalin.http.BadRequestResponse;
+import io.javalin.http.Context;
 import io.javalin.http.NotFoundResponse;
 import org.example.service.FlightService;
 
@@ -31,11 +32,21 @@ public class DestinationController {
 
     public record TripChoice(String destination) {}
 
+    public record TripDetails(
+            String origin,
+            String startDate,
+            String endDate,
+            Integer adults,
+            Boolean directOnly
+    ) {}
+
     public record FlightSearch(
             String origin,
             String destination,
             String departureDate,
-            Integer adults
+            String returnDate,
+            Integer adults,
+            boolean directOnly
     ) {}
 
     public record FlightChoice(String offerId) {}
@@ -57,7 +68,6 @@ public class DestinationController {
                     "Billund", "Denmark", "BLL",
                     "Danmark"
             ),
-
             new Destination(
                     "Oslo", "Norway", "OSL",
                     "Norge"
@@ -74,7 +84,6 @@ public class DestinationController {
                     "Stavanger", "Norway", "SVG",
                     "Norge"
             ),
-
             new Destination(
                     "Stockholm", "Sweden", "ARN",
                     "Sverige"
@@ -96,7 +105,6 @@ public class DestinationController {
     public void registerRoutes(Javalin app) {
 
         // Søg på by, land eller lufthavnskode.
-        // Uden search vises alle 12 destinationer.
         app.get("/api/destinations", ctx -> {
             String search = ctx.queryParam("search");
             String term = normalize(search == null ? "" : search);
@@ -113,7 +121,7 @@ public class DestinationController {
             ctx.json(results);
         });
 
-        // Vælg destination og start en ny rejsekladde.
+        // Trin 1: Vælg destination og start en ny kladde.
         app.post("/api/trip-draft", ctx -> {
             TripChoice input = ctx.bodyAsClass(TripChoice.class);
 
@@ -122,35 +130,18 @@ public class DestinationController {
 
             ctx.sessionAttribute("tripDestination", destination);
             ctx.sessionAttribute("flightSearch", null);
-            ctx.sessionAttribute("flightOffers", null);
-            ctx.sessionAttribute("selectedFlight", null);
+
+            clearFlightSelection(ctx);
 
             ctx.status(201).json(destination);
         });
 
-        // Søg efter enkeltbilletter på economy.
-        app.post("/api/flights/search", ctx -> {
-            FlightSearch input = ctx.bodyAsClass(FlightSearch.class);
-
-            Destination selected =
-                    ctx.sessionAttribute("tripDestination");
-
-            if (selected == null) {
-                throw new BadRequestResponse(
-                        "Vælg først en destination via /api/trip-draft."
-                );
-            }
+        // Trin 2: Vælg datoer, afrejselufthavn og flytype.
+        app.put("/api/trip-draft/details", ctx -> {
+            Destination destination = requireDestination(ctx);
+            TripDetails input = ctx.bodyAsClass(TripDetails.class);
 
             Destination origin = findDestination(input.origin());
-            Destination destination =
-                    findDestination(input.destination());
-
-            if (!destination.airportCode()
-                    .equals(selected.airportCode())) {
-                throw new BadRequestResponse(
-                        "Destinationen skal matche din rejsekladde."
-                );
-            }
 
             if (origin.airportCode()
                     .equals(destination.airportCode())) {
@@ -159,13 +150,25 @@ public class DestinationController {
                 );
             }
 
-            LocalDate date = parseDate(input.departureDate());
+            LocalDate startDate = parseDate(
+                    input.startDate(), "startDate"
+            );
 
-            if (date.isBefore(
+            LocalDate endDate = parseDate(
+                    input.endDate(), "endDate"
+            );
+
+            if (startDate.isBefore(
                     LocalDate.now(ZoneId.of("Europe/Copenhagen"))
             )) {
                 throw new BadRequestResponse(
-                        "Rejsedatoen må ikke være i fortiden."
+                        "Startdatoen må ikke være i fortiden."
+                );
+            }
+
+            if (!endDate.isAfter(startDate)) {
+                throw new BadRequestResponse(
+                        "Slutdatoen skal ligge efter startdatoen."
                 );
             }
 
@@ -177,36 +180,98 @@ public class DestinationController {
                 );
             }
 
-            // En ny søgning erstatter gamle tilbud og flyvalg.
-            ctx.sessionAttribute("flightSearch", null);
-            ctx.sessionAttribute("flightOffers", null);
-            ctx.sessionAttribute("selectedFlight", null);
+            boolean directOnly =
+                    Boolean.TRUE.equals(input.directOnly());
+
+            FlightSearch search = new FlightSearch(
+                    origin.airportCode(),
+                    destination.airportCode(),
+                    startDate.toString(),
+                    endDate.toString(),
+                    adults,
+                    directOnly
+            );
+
+            ctx.sessionAttribute("flightSearch", search);
+
+            // Nye rejseoplysninger rydder tidligere flyvalg.
+            clearFlightSelection(ctx);
+
+            ctx.json(search);
+        });
+
+        // Trin 3: Søg efter fly tur/retur.
+        // Oplysningerne hentes fra sessionen.
+        app.post("/api/flights/search", ctx -> {
+            Destination destination = requireDestination(ctx);
+
+            FlightSearch search =
+                    ctx.sessionAttribute("flightSearch");
+
+            if (search == null) {
+                throw new BadRequestResponse(
+                        "Angiv først datoer og afrejselufthavn "
+                                + "via /api/trip-draft/details."
+                );
+            }
+
+            if (!destination.airportCode()
+                    .equals(search.destination())) {
+                throw new BadRequestResponse(
+                        "Destinationen matcher ikke rejsekladden."
+                );
+            }
+
+            LocalDate departureDate = parseDate(
+                    search.departureDate(), "startDate"
+            );
+
+            if (departureDate.isBefore(
+                    LocalDate.now(ZoneId.of("Europe/Copenhagen"))
+            )) {
+                throw new BadRequestResponse(
+                        "Startdatoen er passeret. Vælg nye datoer."
+                );
+            }
+
+            clearFlightSelection(ctx);
 
             JsonNode result = flightService.searchFlights(
-                    origin.airportCode(),
-                    destination.airportCode(),
-                    date.toString(),
-                    adults
+                    search.origin(),
+                    search.destination(),
+                    search.departureDate(),
+                    search.returnDate(),
+                    search.adults(),
+                    search.directOnly()
             );
 
-            FlightSearch validatedSearch = new FlightSearch(
-                    origin.airportCode(),
-                    destination.airportCode(),
-                    date.toString(),
-                    adults
-            );
+            JsonNode offers = result.path("offers");
 
-            ctx.sessionAttribute("flightSearch", validatedSearch);
-            ctx.sessionAttribute("flightOffers", result.path("offers"));
+            ctx.sessionAttribute("flightOffers", offers);
+
+            String message;
+
+            if (offers.isEmpty()) {
+                message = search.directOnly()
+                        ? "Ingen direkte flytilbud matcher. "
+                        + "Prøv andre datoer eller tillad mellemlandinger."
+                        : "Ingen flytilbud matcher søgningen.";
+            } else {
+                message = "Flytilbud fundet.";
+            }
 
             ctx.json(Map.of(
                     "liveMode", result.path("live_mode").asBoolean(),
-                    "offers", result.path("offers")
+                    "search", search,
+                    "offers", offers,
+                    "message", message
             ));
         });
 
-        // Vælg et flytilbud fra den seneste søgning.
+        // Trin 4: Vælg et tilbud med ud- og hjemrejse.
         app.post("/api/trip-draft/flight", ctx -> {
+            requireDestination(ctx);
+
             FlightChoice input = ctx.bodyAsClass(FlightChoice.class);
 
             if (input.offerId() == null || input.offerId().isBlank()) {
@@ -234,13 +299,12 @@ public class DestinationController {
                 );
             }
 
-            String expiresAt =
-                    selectedOffer.path("expires_at").asText();
-
             Instant expiration;
 
             try {
-                expiration = Instant.parse(expiresAt);
+                expiration = Instant.parse(
+                        selectedOffer.path("expires_at").asText()
+                );
             } catch (DateTimeParseException e) {
                 throw new BadGatewayResponse(
                         "Tilbuddet har en ugyldig udløbstid."
@@ -257,16 +321,9 @@ public class DestinationController {
             ctx.json(selectedOffer);
         });
 
-        // Se destination, søgning og valgt fly.
+        // Se destination, rejseoplysninger og valgt fly.
         app.get("/api/trip-draft", ctx -> {
-            Destination destination =
-                    ctx.sessionAttribute("tripDestination");
-
-            if (destination == null) {
-                throw new NotFoundResponse(
-                        "Du har ingen rejsekladde."
-                );
-            }
+            Destination destination = requireDestination(ctx);
 
             FlightSearch search =
                     ctx.sessionAttribute("flightSearch");
@@ -282,6 +339,24 @@ public class DestinationController {
 
             ctx.json(draft);
         });
+    }
+
+    private void clearFlightSelection(Context ctx) {
+        ctx.sessionAttribute("flightOffers", null);
+        ctx.sessionAttribute("selectedFlight", null);
+    }
+
+    private Destination requireDestination(Context ctx) {
+        Destination destination =
+                ctx.sessionAttribute("tripDestination");
+
+        if (destination == null) {
+            throw new BadRequestResponse(
+                    "Vælg først en destination via /api/trip-draft."
+            );
+        }
+
+        return destination;
     }
 
     private Destination findDestination(String code) {
@@ -300,16 +375,16 @@ public class DestinationController {
                 ));
     }
 
-    private LocalDate parseDate(String value) {
+    private LocalDate parseDate(String value, String field) {
         if (value == null || value.isBlank()) {
-            throw new BadRequestResponse("departureDate mangler.");
+            throw new BadRequestResponse(field + " mangler.");
         }
 
         try {
             return LocalDate.parse(value);
         } catch (DateTimeParseException e) {
             throw new BadRequestResponse(
-                    "departureDate skal have formatet YYYY-MM-DD."
+                    field + " skal have formatet YYYY-MM-DD."
             );
         }
     }

@@ -7,42 +7,46 @@ import org.example.controller.DestinationController;
 import org.example.controller.DestinationInspirationController;
 import org.example.controller.TripController;
 import org.example.controller.WeatherController;
+import org.example.security.JwtService;
+import org.example.security.SecurityMiddleware;
 
 public class Main {
 
     public static void main(String[] args) {
 
-        // Forbinder til databasen
+        JwtService jwtService = new JwtService();
+
         HibernateConfig.getEntityManagerFactory();
 
-        // Starter serveren
-        Javalin app = Javalin.create().start(7070);
+        Javalin app = Javalin.create();
 
-        // Vejr
+        SecurityMiddleware security =
+                new SecurityMiddleware(jwtService);
+        security.register(app);
+
         WeatherController weatherController = new WeatherController();
         weatherController.registerRoutes(app);
 
-        // Opret konto, login og logout
-        AuthController authController = new AuthController();
+        AuthController authController =
+                new AuthController(jwtService);
         authController.registerRoutes(app);
 
-        // Destinationer, flysøgning og rejsekladde
         DestinationController destinationController =
                 new DestinationController();
         destinationController.registerRoutes(app);
 
-        // Beskrivelser, billeder og populære områder
         DestinationInspirationController inspirationController =
                 new DestinationInspirationController();
         inspirationController.registerRoutes(app);
 
-        // Gem og hent rejser fra databasen
         TripController tripController = new TripController();
         tripController.registerRoutes(app);
 
         app.get("/", ctx ->
                 ctx.result("Travel Planner API is running!")
         );
+
+        app.start(7070);
 
         System.out.println(
                 "Travel Planner started on http://localhost:7070"

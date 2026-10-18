@@ -27,20 +27,11 @@ public class FlightService {
             String origin,
             String destination,
             String departureDate,
-            int adults
+            String returnDate,
+            int adults,
+            boolean directOnly
     ) {
         String token = System.getenv("DUFFEL_TOKEN");
-
-        // Tjekker tokenens format uden at udskrive selve tokenen.
-        System.out.println("Token findes: "
-                + (token != null && !token.isBlank()));
-
-        System.out.println("Starter med duffel_test_: "
-                + (token != null && token.startsWith("duffel_test_")));
-
-        System.out.println("Har mellemrum eller linjeskift: "
-                + (token != null
-                && token.chars().anyMatch(Character::isWhitespace)));
 
         if (token == null || token.isBlank()) {
             throw new ServiceUnavailableResponse(
@@ -49,15 +40,23 @@ public class FlightService {
         }
 
         Map<String, Object> data = Map.of(
-                "slices", List.of(Map.of(
-                        "origin", origin,
-                        "destination", destination,
-                        "departure_date", departureDate
-                )),
+                "slices", List.of(
+                        Map.of(
+                                "origin", origin,
+                                "destination", destination,
+                                "departure_date", departureDate
+                        ),
+                        Map.of(
+                                "origin", destination,
+                                "destination", origin,
+                                "departure_date", returnDate
+                        )
+                ),
                 "passengers", Collections.nCopies(
                         adults, Map.of("type", "adult")
                 ),
-                "cabin_class", "economy"
+                "cabin_class", "economy",
+                "max_connections", directOnly ? 0 : 2
         );
 
         try {
@@ -82,10 +81,6 @@ public class FlightService {
             HttpResponse<String> response = client.send(
                     request,
                     HttpResponse.BodyHandlers.ofString()
-            );
-
-            System.out.println(
-                    "Duffel HTTP-status: " + response.statusCode()
             );
 
             if (response.statusCode() < 200
