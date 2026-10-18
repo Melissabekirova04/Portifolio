@@ -18,7 +18,9 @@ public class TripDAO {
             Long userId,
             String destinationJson,
             String searchJson,
-            String flightJson
+            String flightJson,
+            String hotelJson,
+            String priceSummaryJson
     ) {
         EntityManager em = emf.createEntityManager();
 
@@ -28,26 +30,32 @@ public class TripDAO {
             User user = em.find(User.class, userId);
 
             if (user == null) {
-                throw new IllegalArgumentException("Brugeren findes ikke");
+                throw new IllegalArgumentException(
+                        "Brugeren findes ikke."
+                );
             }
 
             Trip trip = new Trip(
                     user,
                     destinationJson,
                     searchJson,
-                    flightJson
+                    flightJson,
+                    hotelJson,
+                    priceSummaryJson
             );
 
             em.persist(trip);
             em.getTransaction().commit();
 
             return trip;
+
         } catch (RuntimeException e) {
             if (em.getTransaction().isActive()) {
                 em.getTransaction().rollback();
             }
 
             throw e;
+
         } finally {
             em.close();
         }
@@ -65,12 +73,16 @@ public class TripDAO {
                     """, Trip.class)
                     .setParameter("userId", userId)
                     .getResultList();
+
         } finally {
             em.close();
         }
     }
 
-    public Optional<Trip> findByIdAndUserId(Long tripId, Long userId) {
+    public Optional<Trip> findByIdAndUserId(
+            Long tripId,
+            Long userId
+    ) {
         EntityManager em = emf.createEntityManager();
 
         try {
@@ -82,8 +94,10 @@ public class TripDAO {
                     """, Trip.class)
                     .setParameter("tripId", tripId)
                     .setParameter("userId", userId)
-                    .getResultStream()
+                    .getResultList()
+                    .stream()
                     .findFirst();
+
         } finally {
             em.close();
         }

@@ -5,6 +5,8 @@ import org.example.config.HibernateConfig;
 import org.example.controller.AuthController;
 import org.example.controller.DestinationController;
 import org.example.controller.DestinationInspirationController;
+import org.example.controller.FlightSelectionController;
+import org.example.controller.HotelController;
 import org.example.controller.TripController;
 import org.example.controller.WeatherController;
 import org.example.security.JwtService;
@@ -24,7 +26,8 @@ public class Main {
                 new SecurityMiddleware(jwtService);
         security.register(app);
 
-        WeatherController weatherController = new WeatherController();
+        WeatherController weatherController =
+                new WeatherController();
         weatherController.registerRoutes(app);
 
         AuthController authController =
@@ -38,6 +41,14 @@ public class Main {
         DestinationInspirationController inspirationController =
                 new DestinationInspirationController();
         inspirationController.registerRoutes(app);
+
+        FlightSelectionController flightSelectionController =
+                new FlightSelectionController();
+        flightSelectionController.registerRoutes(app);
+
+        HotelController hotelController =
+                new HotelController();
+        hotelController.registerRoutes(app);
 
         TripController tripController = new TripController();
         tripController.registerRoutes(app);

@@ -20,6 +20,7 @@ public class SecurityMiddleware {
                     isPathOrChild(path, "/api/trips")
                             || isPathOrChild(path, "/api/trip-draft")
                             || isPathOrChild(path, "/api/flights")
+                            || isPathOrChild(path, "/api/hotels")
                             || isPathOrChild(path, "/api/auth/me")
                             || isPathOrChild(path, "/api/auth/logout");
 
@@ -41,15 +42,15 @@ public class SecurityMiddleware {
             String token = authorization.substring(7).trim();
 
             if (token.isBlank()) {
-                throw new UnauthorizedResponse("JWT-token mangler.");
+                throw new UnauthorizedResponse(
+                        "JWT-token mangler."
+                );
             }
 
             Long userId = jwtService.verifyAndGetUserId(token);
 
-            // Brugerens identitet gælder kun denne forespørgsel.
             ctx.attribute("authenticatedUserId", userId);
 
-            // En kladde må ikke overtages ved skift af bruger.
             bindDraftSession(ctx, userId);
         });
     }

@@ -16,7 +16,11 @@ public class Trip {
     @JoinColumn(name = "user_id", nullable = false)
     private User user;
 
-    @Column(name = "destination_json", nullable = false, columnDefinition = "text")
+    @Column(
+            name = "destination_json",
+            nullable = false,
+            columnDefinition = "text"
+    )
     private String destinationJson;
 
     @Column(name = "search_json", columnDefinition = "text")
@@ -24,6 +28,12 @@ public class Trip {
 
     @Column(name = "flight_json", columnDefinition = "text")
     private String flightJson;
+
+    @Column(name = "hotel_json", columnDefinition = "text")
+    private String hotelJson;
+
+    @Column(name = "price_summary_json", columnDefinition = "text")
+    private String priceSummaryJson;
 
     @Column(name = "created_at", nullable = false)
     private Instant createdAt;
@@ -36,12 +46,16 @@ public class Trip {
             User user,
             String destinationJson,
             String searchJson,
-            String flightJson
+            String flightJson,
+            String hotelJson,
+            String priceSummaryJson
     ) {
         this.user = user;
         this.destinationJson = destinationJson;
         this.searchJson = searchJson;
         this.flightJson = flightJson;
+        this.hotelJson = hotelJson;
+        this.priceSummaryJson = priceSummaryJson;
         this.createdAt = Instant.now();
     }
 
@@ -59,6 +73,14 @@ public class Trip {
 
     public String getFlightJson() {
         return flightJson;
+    }
+
+    public String getHotelJson() {
+        return hotelJson;
+    }
+
+    public String getPriceSummaryJson() {
+        return priceSummaryJson;
     }
 
     public Instant getCreatedAt() {
