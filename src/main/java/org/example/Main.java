@@ -9,6 +9,7 @@ import org.example.controller.DestinationInspirationController;
 import org.example.controller.ExperienceController;
 import org.example.controller.FlightSelectionController;
 import org.example.controller.HotelController;
+import org.example.controller.ItineraryController;
 import org.example.controller.TripController;
 import org.example.controller.WeatherController;
 import org.example.security.JwtService;
@@ -62,6 +63,10 @@ public class Main {
         ActivityController activityController =
                 new ActivityController();
         activityController.registerRoutes(app);
+
+        ItineraryController itineraryController =
+                new ItineraryController();
+        itineraryController.registerRoutes(app);
 
         app.get("/", ctx ->
                 ctx.result("Travel Planner API is running!")

@@ -2,6 +2,7 @@ package org.example.entity;
 
 import jakarta.persistence.*;
 
+import java.math.BigDecimal;
 import java.time.Instant;
 
 @Entity
@@ -37,6 +38,9 @@ public class Trip {
 
     @Column(name = "activities_json", columnDefinition = "text")
     private String activitiesJson;
+
+    @Column(name = "budget_amount", precision = 12, scale = 2)
+    private BigDecimal budgetAmount;
 
     @Column(name = "created_at", nullable = false)
     private Instant createdAt;
@@ -83,6 +87,10 @@ public class Trip {
         this.activitiesJson = activitiesJson;
     }
 
+    public void updateBudget(BigDecimal budgetAmount) {
+        this.budgetAmount = budgetAmount;
+    }
+
     public Long getId() {
         return id;
     }
@@ -109,6 +117,10 @@ public class Trip {
 
     public String getActivitiesJson() {
         return activitiesJson;
+    }
+
+    public BigDecimal getBudgetAmount() {
+        return budgetAmount;
     }
 
     public Instant getCreatedAt() {
