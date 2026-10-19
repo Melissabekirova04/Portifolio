@@ -8,5 +8,4 @@ public record AirportWeather(
         double windSpeed,
         int weatherCode,
         String condition
-) {
-}
+) {}

@@ -6,5 +6,4 @@ public record AirportCity(
         String airportCode,
         double latitude,
         double longitude
-) {
-}
+) {}
