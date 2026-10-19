@@ -5,6 +5,7 @@ import org.example.config.HibernateConfig;
 import org.example.controller.AuthController;
 import org.example.controller.DestinationController;
 import org.example.controller.DestinationInspirationController;
+import org.example.controller.ExperienceController;
 import org.example.controller.FlightSelectionController;
 import org.example.controller.HotelController;
 import org.example.controller.TripController;
@@ -41,6 +42,10 @@ public class Main {
         DestinationInspirationController inspirationController =
                 new DestinationInspirationController();
         inspirationController.registerRoutes(app);
+
+        ExperienceController experienceController =
+                new ExperienceController();
+        experienceController.registerRoutes(app);
 
         FlightSelectionController flightSelectionController =
                 new FlightSelectionController();
