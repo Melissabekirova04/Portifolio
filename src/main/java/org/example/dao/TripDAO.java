@@ -2,12 +2,14 @@ package org.example.dao;
 
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.EntityManagerFactory;
+import jakarta.persistence.LockModeType;
 import org.example.config.HibernateConfig;
 import org.example.entity.Trip;
 import org.example.entity.User;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.function.Consumer;
 
 public class TripDAO {
 
@@ -97,6 +99,53 @@ public class TripDAO {
                     .getResultList()
                     .stream()
                     .findFirst();
+
+        } finally {
+            em.close();
+        }
+    }
+
+    // Hent, lås og opdater rejsen i samme transaktion.
+    public Optional<Trip> updateOwnedTrip(
+            Long tripId,
+            Long userId,
+            Consumer<Trip> update
+    ) {
+        EntityManager em = emf.createEntityManager();
+
+        try {
+            em.getTransaction().begin();
+
+            List<Trip> results = em.createQuery("""
+                    SELECT t
+                    FROM Trip t
+                    WHERE t.id = :tripId
+                      AND t.user.id = :userId
+                    """, Trip.class)
+                    .setParameter("tripId", tripId)
+                    .setParameter("userId", userId)
+                    .setLockMode(LockModeType.PESSIMISTIC_WRITE)
+                    .getResultList();
+
+            if (results.isEmpty()) {
+                em.getTransaction().rollback();
+                return Optional.empty();
+            }
+
+            Trip trip = results.getFirst();
+
+            update.accept(trip);
+
+            em.getTransaction().commit();
+
+            return Optional.of(trip);
+
+        } catch (RuntimeException e) {
+            if (em.getTransaction().isActive()) {
+                em.getTransaction().rollback();
+            }
+
+            throw e;
 
         } finally {
             em.close();

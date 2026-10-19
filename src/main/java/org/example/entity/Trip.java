@@ -59,6 +59,14 @@ public class Trip {
         this.createdAt = Instant.now();
     }
 
+    public void updateFlight(
+            String flightJson,
+            String priceSummaryJson
+    ) {
+        this.flightJson = flightJson;
+        this.priceSummaryJson = priceSummaryJson;
+    }
+
     public Long getId() {
         return id;
     }
