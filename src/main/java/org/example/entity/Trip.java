@@ -35,6 +35,9 @@ public class Trip {
     @Column(name = "price_summary_json", columnDefinition = "text")
     private String priceSummaryJson;
 
+    @Column(name = "activities_json", columnDefinition = "text")
+    private String activitiesJson;
+
     @Column(name = "created_at", nullable = false)
     private Instant createdAt;
 
@@ -56,6 +59,7 @@ public class Trip {
         this.flightJson = flightJson;
         this.hotelJson = hotelJson;
         this.priceSummaryJson = priceSummaryJson;
+        this.activitiesJson = "[]";
         this.createdAt = Instant.now();
     }
 
@@ -73,6 +77,10 @@ public class Trip {
     ) {
         this.hotelJson = hotelJson;
         this.priceSummaryJson = priceSummaryJson;
+    }
+
+    public void updateActivities(String activitiesJson) {
+        this.activitiesJson = activitiesJson;
     }
 
     public Long getId() {
@@ -97,6 +105,10 @@ public class Trip {
 
     public String getPriceSummaryJson() {
         return priceSummaryJson;
+    }
+
+    public String getActivitiesJson() {
+        return activitiesJson;
     }
 
     public Instant getCreatedAt() {

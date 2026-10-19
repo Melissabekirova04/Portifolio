@@ -2,6 +2,7 @@ package org.example;
 
 import io.javalin.Javalin;
 import org.example.config.HibernateConfig;
+import org.example.controller.ActivityController;
 import org.example.controller.AuthController;
 import org.example.controller.DestinationController;
 import org.example.controller.DestinationInspirationController;
@@ -57,6 +58,10 @@ public class Main {
 
         TripController tripController = new TripController();
         tripController.registerRoutes(app);
+
+        ActivityController activityController =
+                new ActivityController();
+        activityController.registerRoutes(app);
 
         app.get("/", ctx ->
                 ctx.result("Travel Planner API is running!")
