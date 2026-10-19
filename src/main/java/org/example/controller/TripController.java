@@ -28,6 +28,7 @@ import java.util.Objects;
 
 public class TripController {
 
+    // Fast testkurs, ikke en aktuel valutakurs.
     private static final BigDecimal TEST_EUR_TO_DKK =
             new BigDecimal("7.50");
 
@@ -38,7 +39,8 @@ public class TripController {
 
     public record FlightChoice(String offerId) {}
 
-    // Søgeresultater til én bestemt gemt rejse.
+    public record HotelChoice(String hotelId) {}
+
     public record SavedFlightSearch(
             Long tripId,
             Long userId,
@@ -48,7 +50,7 @@ public class TripController {
 
     public void registerRoutes(Javalin app) {
 
-        // Opret en rejse fra den aktuelle kladde.
+        // Opret en rejse fra kladden.
         app.post("/api/trips", ctx -> {
             Long userId = SecurityMiddleware.requireUserId(ctx);
 
@@ -66,12 +68,11 @@ public class TripController {
             HotelOffer hotel = ctx.sessionAttribute("selectedHotel");
 
             JsonNode searchData = mapper.valueToTree(search);
+            JsonNode destinationData =
+                    mapper.valueToTree(destination);
 
             validateSearch(searchData);
             validateFlight(flight);
-
-            JsonNode destinationData =
-                    mapper.valueToTree(destination);
 
             String code =
                     destinationData.path("airportCode").asText();
@@ -88,10 +89,10 @@ public class TripController {
                 validateHotel(code, searchData, hotel);
             }
 
-            JsonNode hotelData = mapper.valueToTree(hotel);
-
-            ObjectNode priceSummary =
-                    createPriceSummary(flight, hotelData);
+            ObjectNode priceSummary = createPriceSummary(
+                    flight,
+                    mapper.valueToTree(hotel)
+            );
 
             Trip trip = tripDAO.create(
                     userId,
@@ -112,6 +113,7 @@ public class TripController {
             ctx.status(201).json(toResponse(trip));
         });
 
+        // Hent brugerens rejser.
         app.get("/api/trips", ctx -> {
             Long userId = SecurityMiddleware.requireUserId(ctx);
 
@@ -124,6 +126,7 @@ public class TripController {
             ctx.json(response);
         });
 
+        // Hent én af brugerens rejser.
         app.get("/api/trips/{id}", ctx -> {
             Long userId = SecurityMiddleware.requireUserId(ctx);
             Long tripId = parseTripId(ctx.pathParam("id"));
@@ -131,17 +134,16 @@ public class TripController {
             ctx.json(toResponse(requireTrip(tripId, userId)));
         });
 
-        // US7: Søg nye fly til en allerede gemt rejse.
+        // US7: Søg fly til en gemt rejse.
         app.post("/api/trips/{id}/flights/search", ctx -> {
             Long userId = SecurityMiddleware.requireUserId(ctx);
             Long tripId = parseTripId(ctx.pathParam("id"));
 
             Trip trip = requireTrip(tripId, userId);
-
             JsonNode search = readJsonOrNull(trip.getSearchJson());
+
             validateSearch(search);
 
-            // Fjern gamle søgeresultater, men behold det gemte fly.
             ctx.sessionAttribute("savedTripFlightSearch", null);
 
             JsonNode result = flightService.searchFlights(
@@ -176,12 +178,11 @@ public class TripController {
             ));
         });
 
-        // US7: Tilføj eller erstat flyet på den gemte rejse.
+        // US7: Tilføj eller erstat gemt fly.
         app.put("/api/trips/{id}/flight", ctx -> {
             Long userId = SecurityMiddleware.requireUserId(ctx);
             Long tripId = parseTripId(ctx.pathParam("id"));
 
-            // Kontrollér ejerskab før behandling af valget.
             requireTrip(tripId, userId);
 
             FlightChoice input =
@@ -204,8 +205,7 @@ public class TripController {
             }
 
             JsonNode selected = findOffer(
-                    cached.offers(),
-                    input.offerId()
+                    cached.offers(), input.offerId()
             );
 
             Trip updated = tripDAO.updateOwnedTrip(
@@ -225,18 +225,14 @@ public class TripController {
                         validateSearch(
                                 readJsonOrNull(trip.getSearchJson())
                         );
-
                         validateFlight(selected);
 
                         JsonNode hotel =
                                 readJsonOrNull(trip.getHotelJson());
 
-                        ObjectNode summary =
-                                createPriceSummary(selected, hotel);
-
                         trip.updateFlight(
                                 toJson(selected),
-                                toJson(summary)
+                                toJson(createPriceSummary(selected, hotel))
                         );
                     }
             ).orElseThrow(this::tripNotFound);
@@ -244,7 +240,7 @@ public class TripController {
             ctx.json(toResponse(updated));
         });
 
-        // US7: Fjern flyet fra den gemte rejse.
+        // US7: Fjern gemt fly, og behold hotellet.
         app.delete("/api/trips/{id}/flight", ctx -> {
             Long userId = SecurityMiddleware.requireUserId(ctx);
             Long tripId = parseTripId(ctx.pathParam("id"));
@@ -256,14 +252,103 @@ public class TripController {
                         JsonNode hotel =
                                 readJsonOrNull(trip.getHotelJson());
 
-                        ObjectNode summary =
-                                createPriceSummary(null, hotel);
-
-                        trip.updateFlight(null, toJson(summary));
+                        trip.updateFlight(
+                                null,
+                                toJson(createPriceSummary(null, hotel))
+                        );
                     }
             ).orElseThrow(this::tripNotFound);
 
             ctx.json(toResponse(updated));
+        });
+
+        // US9: Sammenlign hoteller til en gemt rejse.
+        app.post("/api/trips/{id}/hotels/search", ctx -> {
+            Long userId = SecurityMiddleware.requireUserId(ctx);
+            Long tripId = parseTripId(ctx.pathParam("id"));
+
+            Trip trip = requireTrip(tripId, userId);
+
+            ctx.json(Map.of(
+                    "tripId", tripId,
+                    "testData", true,
+                    "currency", "DKK",
+                    "ratingScale", "0-10",
+                    "message",
+                    "Fiktive hoteller, ratings, adresser og priser.",
+                    "offers", hotelsForTrip(trip)
+            ));
+        });
+
+        // US9: Tilføj eller erstat hotellet på en gemt rejse.
+        app.put("/api/trips/{id}/hotel", ctx -> {
+            Long userId = SecurityMiddleware.requireUserId(ctx);
+            Long tripId = parseTripId(ctx.pathParam("id"));
+
+            requireTrip(tripId, userId);
+
+            HotelChoice input = ctx.bodyAsClass(HotelChoice.class);
+
+            if (input.hotelId() == null || input.hotelId().isBlank()) {
+                throw new BadRequestResponse("hotelId mangler.");
+            }
+
+            // Ejerskab kontrolleres igen under databaselåsen.
+            // Hotel og pris beregnes ud fra den gemte rejse.
+            Trip updated = tripDAO.updateOwnedTrip(
+                    tripId,
+                    userId,
+                    trip -> {
+                        HotelOffer selected = hotelsForTrip(trip)
+                                .stream()
+                                .filter(hotel ->
+                                        hotel.id().equals(input.hotelId()))
+                                .findFirst()
+                                .orElseThrow(() -> new NotFoundResponse(
+                                        "Hotellet findes ikke "
+                                                + "på denne destination."
+                                ));
+
+                        JsonNode flight =
+                                readJsonOrNull(trip.getFlightJson());
+
+                        JsonNode hotel = mapper.valueToTree(selected);
+
+                        // Det allerede gemte fly bevares.
+                        trip.updateHotel(
+                                toJson(selected),
+                                toJson(createPriceSummary(flight, hotel))
+                        );
+                    }
+            ).orElseThrow(this::tripNotFound);
+
+            ObjectNode response = toResponse(updated);
+            response.put("message", "Hotelvalget er gemt.");
+            ctx.json(response);
+        });
+
+        // US9: Fjern hotellet, og behold det gemte fly.
+        app.delete("/api/trips/{id}/hotel", ctx -> {
+            Long userId = SecurityMiddleware.requireUserId(ctx);
+            Long tripId = parseTripId(ctx.pathParam("id"));
+
+            Trip updated = tripDAO.updateOwnedTrip(
+                    tripId,
+                    userId,
+                    trip -> {
+                        JsonNode flight =
+                                readJsonOrNull(trip.getFlightJson());
+
+                        trip.updateHotel(
+                                null,
+                                toJson(createPriceSummary(flight, null))
+                        );
+                    }
+            ).orElseThrow(this::tripNotFound);
+
+            ObjectNode response = toResponse(updated);
+            response.put("message", "Hotellet er fjernet.");
+            ctx.json(response);
         });
     }
 
@@ -274,6 +359,37 @@ public class TripController {
 
     private NotFoundResponse tripNotFound() {
         return new NotFoundResponse("Rejsen findes ikke.");
+    }
+
+    private List<HotelOffer> hotelsForTrip(Trip trip) {
+        JsonNode search = readJsonOrNull(trip.getSearchJson());
+        JsonNode destination =
+                readJsonOrNull(trip.getDestinationJson());
+
+        validateSearch(search);
+
+        String code = destination.path("airportCode").asText();
+
+        if (!code.equals(search.path("destination").asText())) {
+            throw new BadRequestResponse(
+                    "Destinationen matcher ikke rejseoplysningerne."
+            );
+        }
+
+        try {
+            return hotelService.search(
+                    code,
+                    LocalDate.parse(
+                            search.path("departureDate").asText()
+                    ),
+                    LocalDate.parse(
+                            search.path("returnDate").asText()
+                    ),
+                    search.path("adults").asInt()
+            );
+        } catch (IllegalArgumentException e) {
+            throw new BadRequestResponse(e.getMessage());
+        }
     }
 
     private JsonNode findOffer(JsonNode offers, String offerId) {
@@ -303,11 +419,9 @@ public class TripController {
             startDate = LocalDate.parse(
                     search.path("departureDate").asText()
             );
-
             endDate = LocalDate.parse(
                     search.path("returnDate").asText()
             );
-
         } catch (DateTimeParseException e) {
             throw new BadRequestResponse(
                     "Rejsen skal have gyldige start- og slutdatoer."
@@ -360,7 +474,6 @@ public class TripController {
             expiration = Instant.parse(
                     flight.path("expires_at").asText()
             );
-
         } catch (DateTimeParseException e) {
             throw new BadGatewayResponse(
                     "Flytilbuddet har en ugyldig udløbstid."
@@ -387,18 +500,15 @@ public class TripController {
             JsonNode search,
             HotelOffer selected
     ) {
-        LocalDate checkIn = LocalDate.parse(
-                search.path("departureDate").asText()
-        );
-
-        LocalDate checkOut = LocalDate.parse(
-                search.path("returnDate").asText()
-        );
-
-        int adults = search.path("adults").asInt();
-
         boolean valid = hotelService.search(
-                        destination, checkIn, checkOut, adults
+                        destination,
+                        LocalDate.parse(
+                                search.path("departureDate").asText()
+                        ),
+                        LocalDate.parse(
+                                search.path("returnDate").asText()
+                        ),
+                        search.path("adults").asInt()
                 )
                 .stream()
                 .anyMatch(offer -> offer.equals(selected));
@@ -418,7 +528,6 @@ public class TripController {
         ObjectNode summary = mapper.createObjectNode();
 
         boolean hasHotel = hotel != null && !hotel.isNull();
-
         BigDecimal hotelAmount = BigDecimal.ZERO;
 
         if (hasHotel) {
@@ -429,8 +538,7 @@ public class TripController {
             }
 
             hotelAmount = readAmount(
-                    hotel.path("totalAmount").asText(),
-                    "Hotel"
+                    hotel.path("totalAmount").asText(), "Hotel"
             );
         }
 
@@ -452,8 +560,7 @@ public class TripController {
 
         if (flight != null && !flight.isNull()) {
             BigDecimal originalAmount = readAmount(
-                    flight.path("total_amount").asText(),
-                    "Fly"
+                    flight.path("total_amount").asText(), "Fly"
             );
 
             String currency =
@@ -470,12 +577,10 @@ public class TripController {
 
             if ("DKK".equals(currency)) {
                 flightDkk = originalAmount;
-
             } else if ("EUR".equals(currency)) {
                 flightDkk = originalAmount.multiply(TEST_EUR_TO_DKK);
                 estimatedConversion = true;
                 summary.put("eurToDkkRate", TEST_EUR_TO_DKK);
-
             } else {
                 supported = false;
             }
@@ -489,19 +594,17 @@ public class TripController {
                     "totalAmount",
                     money(roundedFlight.add(hotelAmount))
             );
-
         } else {
             summary.putNull("flightAmount");
             summary.putNull("totalAmount");
-
             summary.put(
                     "message",
-                    "Flyets valuta understøttes endnu ikke til DKK-omregning."
+                    "Flyets valuta understøttes endnu ikke "
+                            + "til DKK-omregning."
             );
         }
 
         summary.put("estimatedConversion", estimatedConversion);
-
         summary.put(
                 "priceNotice",
                 "Gemt planlægningspris. Fiktive hotelpriser. "
@@ -521,7 +624,6 @@ public class TripController {
             }
 
             return amount;
-
         } catch (NumberFormatException e) {
             throw new BadGatewayResponse(
                     label + " har en ugyldig pris."
@@ -542,7 +644,6 @@ public class TripController {
             }
 
             return id;
-
         } catch (NumberFormatException e) {
             throw new BadRequestResponse(
                     "Rejsens ID skal være et positivt heltal."
@@ -553,7 +654,6 @@ public class TripController {
     private String toJson(Object value) {
         try {
             return mapper.writeValueAsString(value);
-
         } catch (JsonProcessingException e) {
             throw new IllegalStateException(
                     "Kunne ikke serialisere rejseoplysninger.", e
@@ -577,7 +677,6 @@ public class TripController {
 
         try {
             return mapper.readTree(value);
-
         } catch (JsonProcessingException e) {
             throw new IllegalStateException(
                     "Kunne ikke læse gemte rejseoplysninger.", e
@@ -595,22 +694,18 @@ public class TripController {
                 "destination",
                 readJsonOrNull(trip.getDestinationJson())
         );
-
         response.set(
                 "search",
                 readJsonOrNull(trip.getSearchJson())
         );
-
         response.set(
                 "flight",
                 readJsonOrNull(trip.getFlightJson())
         );
-
         response.set(
                 "hotel",
                 readJsonOrNull(trip.getHotelJson())
         );
-
         response.set(
                 "priceSummary",
                 readJsonOrNull(trip.getPriceSummaryJson())

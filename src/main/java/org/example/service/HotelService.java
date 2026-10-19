@@ -23,7 +23,11 @@ public class HotelService {
             BigDecimal pricePerRoomPerNight,
             BigDecimal totalAmount,
             String currency,
-            boolean testData
+            boolean testData,
+            BigDecimal rating,
+            String address,
+            String locationDescription,
+            List<String> amenities
     ) {}
 
     private final Map<String, City> cities = Map.ofEntries(
@@ -55,7 +59,8 @@ public class HotelService {
             );
         }
 
-        if (!checkOut.isAfter(checkIn)) {
+        if (checkIn == null || checkOut == null
+                || !checkOut.isAfter(checkIn)) {
             throw new IllegalArgumentException(
                     "Udtjekning skal være efter indtjekning."
             );
@@ -75,19 +80,44 @@ public class HotelService {
                         destination + "-budget",
                         city.name() + " Budget Hotel (test)",
                         destination, city, city.basePrice(),
-                        checkIn, checkOut, adults, rooms, nights
+                        checkIn, checkOut, adults, rooms, nights,
+                        "7.4",
+                        "Testvej 10, " + city.name()
+                                + " (fiktiv adresse)",
+                        "Uden for centrum, tæt på offentlig transport.",
+                        List.of("Wi-Fi", "Eget badeværelse")
                 ),
                 createOffer(
                         destination + "-city",
                         city.name() + " City Hotel (test)",
                         destination, city, city.basePrice() + 300,
-                        checkIn, checkOut, adults, rooms, nights
+                        checkIn, checkOut, adults, rooms, nights,
+                        "8.6",
+                        "Testpladsen 20, " + city.name()
+                                + " (fiktiv adresse)",
+                        "Centralt med gåafstand til butikker og caféer.",
+                        List.of(
+                                "Wi-Fi",
+                                "Eget badeværelse",
+                                "Morgenmad inkluderet"
+                        )
                 ),
                 createOffer(
                         destination + "-premium",
                         city.name() + " Premium Hotel (test)",
                         destination, city, city.basePrice() + 750,
-                        checkIn, checkOut, adults, rooms, nights
+                        checkIn, checkOut, adults, rooms, nights,
+                        "9.3",
+                        "Testparken 30, " + city.name()
+                                + " (fiktiv adresse)",
+                        "Roligt område tæt på centrum og grønne områder.",
+                        List.of(
+                                "Wi-Fi",
+                                "Eget badeværelse",
+                                "Morgenmad inkluderet",
+                                "Fitness",
+                                "Spa"
+                        )
                 )
         );
     }
@@ -102,7 +132,11 @@ public class HotelService {
             LocalDate checkOut,
             int adults,
             int rooms,
-            long nights
+            long nights,
+            String rating,
+            String address,
+            String locationDescription,
+            List<String> amenities
     ) {
         BigDecimal price = BigDecimal.valueOf(nightlyPrice)
                 .setScale(2);
@@ -124,7 +158,11 @@ public class HotelService {
                 price,
                 total,
                 "DKK",
-                true
+                true,
+                new BigDecimal(rating),
+                address,
+                locationDescription,
+                amenities
         );
     }
 }

@@ -67,6 +67,14 @@ public class Trip {
         this.priceSummaryJson = priceSummaryJson;
     }
 
+    public void updateHotel(
+            String hotelJson,
+            String priceSummaryJson
+    ) {
+        this.hotelJson = hotelJson;
+        this.priceSummaryJson = priceSummaryJson;
+    }
+
     public Long getId() {
         return id;
     }
