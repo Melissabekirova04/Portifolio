@@ -9,21 +9,33 @@ import java.util.Optional;
 
 public class UserDAO {
 
-    private final EntityManagerFactory emf =
-            HibernateConfig.getEntityManagerFactory();
+    private final EntityManagerFactory emf;
+
+    public UserDAO() {
+        this(HibernateConfig.getEntityManagerFactory());
+    }
+
+    public UserDAO(EntityManagerFactory emf) {
+        this.emf = emf;
+    }
 
     public User create(User user) {
         EntityManager em = emf.createEntityManager();
 
         try {
             em.getTransaction().begin();
+
             em.persist(user);
+
             em.getTransaction().commit();
+
             return user;
+
         } catch (RuntimeException e) {
             if (em.getTransaction().isActive()) {
                 em.getTransaction().rollback();
             }
+
             throw e;
         } finally {
             em.close();

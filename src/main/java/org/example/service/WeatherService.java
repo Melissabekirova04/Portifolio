@@ -6,10 +6,13 @@ import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import io.javalin.http.BadGatewayResponse;
 import io.javalin.http.NotFoundResponse;
+import io.javalin.http.ServiceUnavailableResponse;
 import org.example.client.WeatherApiClient;
 import org.example.model.AirportCity;
 import org.example.model.AirportWeather;
 import org.example.service.ExperienceService.Experience;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
@@ -27,9 +30,19 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.Callable;
+import java.util.concurrent.CancellationException;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
 
 public class WeatherService {
+
+    private static final Logger logger =
+            LoggerFactory.getLogger(WeatherService.class);
 
     private final WeatherApiClient weatherApiClient =
             new WeatherApiClient();
@@ -91,7 +104,6 @@ public class WeatherService {
             )
     );
 
-    // Klassificering af vores eksisterende oplevelser.
     private static final Set<String> INDOOR = Set.of(
             "AAR-aros",
             "AAR-moesgaard",
@@ -115,15 +127,88 @@ public class WeatherService {
             "ARN-skansen"
     );
 
-    // Eksisterende funktion: dagens vejr for alle destinationer.
+    // Hent vejret for alle destinationer med op til fire tråde.
     public List<AirportWeather> getAllAirportWeather() {
-        return airports.stream()
-                .map(airport ->
-                        getWeatherByAirportCode(airport.airportCode()))
-                .toList();
+        ExecutorService executor = Executors.newFixedThreadPool(4);
+
+        List<Callable<AirportWeather>> tasks = new ArrayList<>();
+
+        for (AirportCity airport : airports) {
+            Callable<AirportWeather> task = () ->
+                    getWeatherByAirportCode(airport.airportCode());
+
+            tasks.add(task);
+        }
+
+        logger.info(
+                "Henter vejr for {} destinationer med op til fire tråde.",
+                airports.size()
+        );
+
+        try {
+            // Start opgaverne, og vent samlet højst 70 sekunder.
+            List<Future<AirportWeather>> futures =
+                    executor.invokeAll(tasks, 70, TimeUnit.SECONDS);
+
+            List<AirportWeather> results = new ArrayList<>();
+
+            for (Future<AirportWeather> future : futures) {
+                results.add(future.get());
+            }
+
+            logger.info(
+                    "Vejr hentet for {} destinationer.",
+                    results.size()
+            );
+
+            return results;
+
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+
+            logger.warn("Hentning af vejr blev afbrudt.");
+
+            throw new ServiceUnavailableResponse(
+                    "Hentning af vejr blev afbrudt. Prøv igen."
+            );
+
+        } catch (CancellationException e) {
+            logger.warn("Den samlede tidsgrænse for vejrkald blev nået.");
+
+            throw new ServiceUnavailableResponse(
+                    "Det tog for lang tid at hente alle vejrdata. "
+                            + "Prøv igen senere."
+            );
+
+        } catch (ExecutionException e) {
+            Throwable cause = e.getCause();
+
+            logger.warn("En vejropgave fejlede.", cause);
+
+            // Bevar fejlstatus fra WeatherApiClient.
+            if (cause instanceof ServiceUnavailableResponse) {
+                throw new ServiceUnavailableResponse(
+                        cause.getMessage()
+                );
+            }
+
+            if (cause instanceof BadGatewayResponse) {
+                throw new BadGatewayResponse(
+                        cause.getMessage()
+                );
+            }
+
+            throw new BadGatewayResponse(
+                    "Kunne ikke hente vejret for alle destinationer."
+            );
+
+        } finally {
+            // Forsøg også at stoppe ufærdige opgaver ved fejl.
+            executor.shutdownNow();
+        }
     }
 
-    // Eksisterende funktion: dagens vejr for én destination.
+    // Dagens vejr for én destination.
     public AirportWeather getWeatherByAirportCode(String code) {
         AirportCity airport = requireAirport(code);
 
@@ -291,12 +376,14 @@ public class WeatherService {
 
                 if (preferIndoor) {
                     preference = "indoor";
+
                     reason =
                             "Indendørs oplevelser prioriteres på grund "
                                     + "af nedbør, tåge, vind eller temperatur.";
 
                 } else if (wmo >= 0 && wmo <= 2) {
                     preference = "outdoor";
+
                     reason =
                             "Udendørs oplevelser prioriteres, fordi "
                                     + "prognosen viser forhold, der passer "
@@ -382,6 +469,7 @@ public class WeatherService {
         );
 
         JsonNode daily = data.path("daily");
+
         JsonNode dates = daily.path("time");
         JsonNode temperatures = daily.path("temperature_2m_mean");
         JsonNode precipitation = daily.path("precipitation_sum");

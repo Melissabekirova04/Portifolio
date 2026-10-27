@@ -16,9 +16,7 @@ import java.time.format.DateTimeParseException;
 
 public class WeatherController {
 
-    private final WeatherService weatherService =
-            new WeatherService();
-
+    private final WeatherService weatherService = new WeatherService();
     private final TripDAO tripDAO = new TripDAO();
     private final ObjectMapper mapper = new ObjectMapper();
 

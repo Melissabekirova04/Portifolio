@@ -4,6 +4,10 @@ import jakarta.persistence.*;
 
 import java.math.BigDecimal;
 import java.time.Instant;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+import java.util.Objects;
 
 @Entity
 @Table(name = "trips")
@@ -30,23 +34,47 @@ public class Trip {
     @Column(name = "flight_json", columnDefinition = "text")
     private String flightJson;
 
+    // Beholdes, indtil hoteldata er overført til den nye tabel.
     @Column(name = "hotel_json", columnDefinition = "text")
     private String hotelJson;
 
     @Column(name = "price_summary_json", columnDefinition = "text")
     private String priceSummaryJson;
 
+    // Beholdes som kopi af de gamle aktiviteter.
     @Column(name = "activities_json", columnDefinition = "text")
     private String activitiesJson;
 
-    @Column(name = "budget_amount", precision = 12, scale = 2)
-    private BigDecimal budgetAmount;
+    @OneToMany(
+            mappedBy = "trip",
+            fetch = FetchType.LAZY,
+            cascade = CascadeType.ALL,
+            orphanRemoval = true
+    )
+    @OrderBy("date ASC, time ASC, id ASC")
+    private List<Activity> activities = new ArrayList<>();
+
+    @OneToOne(
+            mappedBy = "trip",
+            fetch = FetchType.LAZY,
+            cascade = CascadeType.ALL,
+            orphanRemoval = true
+    )
+    private TripBudget budget;
+
+    @OneToOne(
+            mappedBy = "trip",
+            fetch = FetchType.LAZY,
+            cascade = CascadeType.ALL,
+            orphanRemoval = true
+    )
+    private TripHotel hotel;
 
     @Column(name = "created_at", nullable = false)
     private Instant createdAt;
 
     protected Trip() {
-        // Hibernate
+        // Bruges af Hibernate.
     }
 
     public Trip(
@@ -67,6 +95,32 @@ public class Trip {
         this.createdAt = Instant.now();
     }
 
+    public void addActivity(Activity activity) {
+        Objects.requireNonNull(
+                activity,
+                "Aktiviteten må ikke være null."
+        );
+
+        if (activity.getTrip() != null
+                && activity.getTrip() != this) {
+            throw new IllegalArgumentException(
+                    "Aktiviteten tilhører allerede en anden rejse."
+            );
+        }
+
+        if (!activities.contains(activity)) {
+            activities.add(activity);
+        }
+
+        activity.assignTrip(this);
+    }
+
+    public void removeActivity(Activity activity) {
+        if (activities.remove(activity)) {
+            activity.assignTrip(null);
+        }
+    }
+
     public void updateFlight(
             String flightJson,
             String priceSummaryJson
@@ -75,6 +129,7 @@ public class Trip {
         this.priceSummaryJson = priceSummaryJson;
     }
 
+    // Bruges af den eksisterende kode under overgangen.
     public void updateHotel(
             String hotelJson,
             String priceSummaryJson
@@ -83,12 +138,54 @@ public class Trip {
         this.priceSummaryJson = priceSummaryJson;
     }
 
+    public void changeHotel(TripHotel selected) {
+        // null betyder, at hotelvalget fjernes.
+        if (selected == null) {
+            if (hotel != null) {
+                hotel.removeTrip();
+                hotel = null;
+            }
+
+            return;
+        }
+
+        if (selected.getTrip() != this) {
+            throw new IllegalArgumentException(
+                    "Hotelvalget skal tilhøre denne rejse."
+            );
+        }
+
+        if (hotel == selected) {
+            return;
+        }
+
+        if (hotel == null) {
+            hotel = selected;
+        } else {
+            hotel.updateFrom(selected);
+        }
+    }
+
     public void updateActivities(String activitiesJson) {
         this.activitiesJson = activitiesJson;
     }
 
-    public void updateBudget(BigDecimal budgetAmount) {
-        this.budgetAmount = budgetAmount;
+    public void updateBudget(BigDecimal amount) {
+        // null betyder, at budgetgrænsen fjernes.
+        if (amount == null) {
+            if (budget != null) {
+                budget.removeTrip();
+                budget = null;
+            }
+
+            return;
+        }
+
+        if (budget == null) {
+            budget = new TripBudget(this, amount);
+        } else {
+            budget.updateAmount(amount);
+        }
     }
 
     public Long getId() {
@@ -119,8 +216,24 @@ public class Trip {
         return activitiesJson;
     }
 
+    public List<Activity> getActivities() {
+        return Collections.unmodifiableList(activities);
+    }
+
+    public TripBudget getBudget() {
+        return budget;
+    }
+
+    public TripHotel getHotel() {
+        return hotel;
+    }
+
     public BigDecimal getBudgetAmount() {
-        return budgetAmount;
+        if (budget == null) {
+            return null;
+        }
+
+        return budget.getMaxAmount();
     }
 
     public Instant getCreatedAt() {
