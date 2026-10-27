@@ -1,0 +1,87 @@
+@baseUrl = http://localhost:7070
+@tripId = 5
+
+### 1. Kontrollér at serveren kører — forvent 200
+GET {{baseUrl}}/
+
+
+### 2. Login — forvent 200
+POST {{baseUrl}}/api/auth/login
+Content-Type: application/json
+
+{
+  "email": "{{email}}",
+  "password": "{{password}}"
+}
+
+> {%
+    client.global.clear("token");
+
+    if (response.status === 200) {
+        client.global.set("token", response.body.token);
+    }
+%}
+
+
+### 3. Se den bruger, der er logget ind — forvent 200
+GET {{baseUrl}}/api/auth/me
+Authorization: Bearer {{token}}
+
+
+### 4. Søg efter destinationer i Norge — forvent 200
+GET {{baseUrl}}/api/destinations?search=Norge
+
+
+### 5. Se mine gemte rejser — forvent 200
+GET {{baseUrl}}/api/trips
+Authorization: Bearer {{token}}
+
+
+### 6. Se rejseplan og budget — forvent 200
+GET {{baseUrl}}/api/trips/{{tripId}}/itinerary
+Authorization: Bearer {{token}}
+
+
+### 7. Se rejsens aktiviteter — forvent 200
+GET {{baseUrl}}/api/trips/{{tripId}}/activities
+Authorization: Bearer {{token}}
+
+
+### 8. Se vejret i Oslo — forvent 200, kræver eksternt API
+GET {{baseUrl}}/api/weather/destinations/OSL
+
+
+### 9. Adgang uden token — forvent 401
+GET {{baseUrl}}/api/auth/me
+
+
+### 10. Ugyldigt rejse-ID — forvent 400
+GET {{baseUrl}}/api/trips/abc
+Authorization: Bearer {{token}}
+
+
+### 11. Forkert datatype ved login — forvent 400
+POST {{baseUrl}}/api/auth/login
+Content-Type: application/json
+
+{
+  "email": {
+    "forkert": "datatype"
+  },
+  "password": "Test12345!"
+}
+
+
+### 12. Forkert datatype for pris — forvent 400
+POST {{baseUrl}}/api/trips/{{tripId}}/activities/custom
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "name": "Testaktivitet",
+  "date": "2026-11-22",
+  "time": "12:00",
+  "priceAmount": "hej",
+  "category": "Test",
+  "notes": ""
+}

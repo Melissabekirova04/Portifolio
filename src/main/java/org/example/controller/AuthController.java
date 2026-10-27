@@ -1,7 +1,13 @@
 package org.example.controller;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.core.exc.StreamReadException;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.exc.MismatchedInputException;
 import com.password4j.Password;
 import io.javalin.Javalin;
+import io.javalin.http.BadRequestResponse;
+import io.javalin.http.Context;
 import org.example.dao.UserDAO;
 import org.example.dto.LoginRequest;
 import org.example.dto.RegisterRequest;
@@ -17,6 +23,7 @@ public class AuthController {
 
     private final UserDAO userDAO = new UserDAO();
     private final JwtService jwtService;
+    private final ObjectMapper mapper = new ObjectMapper();
 
     public AuthController(JwtService jwtService) {
         this.jwtService = jwtService;
@@ -26,7 +33,7 @@ public class AuthController {
 
         app.post("/api/auth/register", ctx -> {
             RegisterRequest request =
-                    ctx.bodyAsClass(RegisterRequest.class);
+                    readRequest(ctx, RegisterRequest.class);
 
             String email = request.email() == null
                     ? ""
@@ -49,6 +56,7 @@ public class AuthController {
             // BCrypt har en grænse på 72 bytes.
             if (request.password()
                     .getBytes(StandardCharsets.UTF_8).length > 72) {
+
                 ctx.status(400).json(Map.of(
                         "error",
                         "Adgangskoden må højst fylde 72 bytes."
@@ -84,7 +92,7 @@ public class AuthController {
 
         app.post("/api/auth/login", ctx -> {
             LoginRequest request =
-                    ctx.bodyAsClass(LoginRequest.class);
+                    readRequest(ctx, LoginRequest.class);
 
             if (request.email() == null
                     || request.email().isBlank()
@@ -154,5 +162,27 @@ public class AuthController {
                             + "på klienten for at logge ud."
             ));
         });
+    }
+
+    // Læs JSON og giv 400 ved ugyldigt format eller forkert datatype.
+    private <T> T readRequest(Context ctx, Class<T> type)
+            throws JsonProcessingException {
+
+        try {
+            T request = mapper.readValue(ctx.body(), type);
+
+            if (request == null) {
+                throw new BadRequestResponse(
+                        "Requesten skal indeholde et JSON-objekt."
+                );
+            }
+
+            return request;
+
+        } catch (StreamReadException | MismatchedInputException e) {
+            throw new BadRequestResponse(
+                    "Ugyldigt input. Kontrollér JSON-format og datatyper."
+            );
+        }
     }
 }

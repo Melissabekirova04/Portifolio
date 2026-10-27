@@ -1,5 +1,9 @@
 package org.example.controller;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.core.exc.StreamReadException;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.exc.MismatchedInputException;
 import io.javalin.Javalin;
 import io.javalin.http.BadRequestResponse;
 import io.javalin.http.Context;
@@ -16,6 +20,8 @@ public class ActivityController {
 
     private final ActivityService activityService =
             new ActivityService();
+
+    private final ObjectMapper mapper = new ObjectMapper();
 
     public record ActivityChoice(
             String experienceId,
@@ -59,16 +65,14 @@ public class ActivityController {
         );
     }
 
-    private void createRecommended(Context ctx) {
+    private void createRecommended(Context ctx)
+            throws JsonProcessingException {
+
         Long userId = SecurityMiddleware.requireUserId(ctx);
         Long tripId = parseTripId(ctx.pathParam("id"));
 
         ActivityChoice input =
-                ctx.bodyAsClass(ActivityChoice.class);
-
-        if (input == null) {
-            throw new BadRequestResponse("Request body mangler.");
-        }
+                readRequest(ctx, ActivityChoice.class);
 
         try {
             ActivityDTO activity =
@@ -97,16 +101,14 @@ public class ActivityController {
         }
     }
 
-    private void createCustom(Context ctx) {
+    private void createCustom(Context ctx)
+            throws JsonProcessingException {
+
         Long userId = SecurityMiddleware.requireUserId(ctx);
         Long tripId = parseTripId(ctx.pathParam("id"));
 
         ActivityInput input =
-                ctx.bodyAsClass(ActivityInput.class);
-
-        if (input == null) {
-            throw new BadRequestResponse("Request body mangler.");
-        }
+                readRequest(ctx, ActivityInput.class);
 
         try {
             ActivityDTO activity = activityService.createCustom(
@@ -162,17 +164,15 @@ public class ActivityController {
         }
     }
 
-    private void update(Context ctx) {
+    private void update(Context ctx)
+            throws JsonProcessingException {
+
         Long userId = SecurityMiddleware.requireUserId(ctx);
         Long tripId = parseTripId(ctx.pathParam("id"));
         String activityId = ctx.pathParam("activityId");
 
         ActivityInput input =
-                ctx.bodyAsClass(ActivityInput.class);
-
-        if (input == null) {
-            throw new BadRequestResponse("Request body mangler.");
-        }
+                readRequest(ctx, ActivityInput.class);
 
         try {
             ActivityDTO activity = activityService.update(
@@ -226,6 +226,28 @@ public class ActivityController {
             ctx.status(400).json(Map.of(
                     "message", e.getMessage()
             ));
+        }
+    }
+
+    // Læs JSON og afvis ugyldigt format eller forkert datatype.
+    private <T> T readRequest(Context ctx, Class<T> type)
+            throws JsonProcessingException {
+
+        try {
+            T input = mapper.readValue(ctx.body(), type);
+
+            if (input == null) {
+                throw new BadRequestResponse(
+                        "Requesten skal indeholde et JSON-objekt."
+                );
+            }
+
+            return input;
+
+        } catch (StreamReadException | MismatchedInputException e) {
+            throw new BadRequestResponse(
+                    "Ugyldigt input. Kontrollér JSON-format og datatyper."
+            );
         }
     }
 

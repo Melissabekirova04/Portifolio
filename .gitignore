@@ -37,3 +37,14 @@ build/
 
 ### Mac OS ###
 .DS_Store
+
+http-client.private.env.json
+.idea/httpRequests/
+*.cookies
+
+/skrivebord
+/skrivebord.pub
+travel-cookies.txt
+.env
+.env.*
+!.env.example
