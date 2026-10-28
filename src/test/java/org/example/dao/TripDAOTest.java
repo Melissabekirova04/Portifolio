@@ -1,3 +1,4 @@
+
 package org.example.dao;
 
 import jakarta.persistence.EntityManager;
@@ -5,6 +6,7 @@ import jakarta.persistence.EntityManagerFactory;
 import org.example.entity.Activity;
 import org.example.entity.Trip;
 import org.example.entity.TripBudget;
+import org.example.entity.TripFlight;
 import org.example.entity.TripHotel;
 import org.example.entity.User;
 import org.hibernate.cfg.Configuration;
@@ -41,6 +43,7 @@ class TripDAOTest {
                 .addAnnotatedClass(Activity.class)
                 .addAnnotatedClass(TripBudget.class)
                 .addAnnotatedClass(TripHotel.class)
+                .addAnnotatedClass(TripFlight.class)
                 .setProperty(
                         "hibernate.connection.driver_class",
                         "org.postgresql.Driver"
@@ -297,6 +300,112 @@ class TripDAOTest {
         assertEquals(0L, countBudgets());
     }
 
+    // NY TEST: Kontrollerer at flyvalg gemmes i PostgreSQL.
+    @Test
+    void savesFlightInDatabase() {
+
+        String flightJson = """
+                {
+                  "id": "off_test123",
+                  "total_amount": "1850.00",
+                  "total_currency": "DKK",
+                  "slices": [
+                    {
+                      "origin": {
+                        "iata_code": "CPH"
+                      },
+                      "destination": {
+                        "iata_code": "OSL"
+                      },
+                      "segments": [
+                        {
+                          "departing_at": "2026-11-20T10:30:00",
+                          "operating_carrier": {
+                            "name": "SAS"
+                          }
+                        }
+                      ]
+                    },
+                    {
+                      "origin": {
+                        "iata_code": "OSL"
+                      },
+                      "destination": {
+                        "iata_code": "CPH"
+                      },
+                      "segments": [
+                        {
+                          "departing_at": "2026-11-25T15:00:00"
+                        }
+                      ]
+                    }
+                  ]
+                }
+                """;
+
+        // 1. Opret en rejse.
+        Trip trip = createTrip(melissaId);
+
+        // 2. Gem flyvalget på rejsen.
+        tripDAO.updateOwnedTrip(
+                trip.getId(),
+                melissaId,
+                savedTrip -> savedTrip.updateFlightSnapshot(
+                        flightJson
+                )
+        ).orElseThrow();
+
+        // 3. Hent rejsen igen fra PostgreSQL.
+        Trip saved = tripDAO.findByIdAndUserId(
+                trip.getId(),
+                melissaId
+        ).orElseThrow();
+
+        // 4. Kontroller at flyvalget eksisterer.
+        assertNotNull(saved.getFlight());
+
+        TripFlight flight = saved.getFlight();
+
+        // 5. Kontroller de gemte oplysninger.
+        assertNotNull(flight.getId());
+
+        assertEquals(
+                "off_test123",
+                flight.getOfferId()
+        );
+
+        assertEquals("CPH", flight.getOrigin());
+        assertEquals("OSL", flight.getDestination());
+
+        assertEquals(
+                "2026-11-20",
+                flight.getDepartureDate()
+        );
+
+        assertEquals(
+                "2026-11-25",
+                flight.getReturnDate()
+        );
+
+        assertEquals("SAS", flight.getAirline());
+
+        assertEquals(
+                0,
+                new BigDecimal("1850.00")
+                        .compareTo(flight.getTotalAmount())
+        );
+
+        assertEquals("DKK", flight.getCurrency());
+
+        assertEquals(
+                flightJson,
+                flight.getFlightJson()
+        );
+
+        // 6. Kontroller at der findes én række i trip_flights.
+        assertEquals(1L, countFlights());
+    }
+
     private Trip createTrip(Long userId) {
         return tripDAO.create(
                 userId,
@@ -325,6 +434,19 @@ class TripDAOTest {
         try {
             return em.createQuery(
                     "SELECT COUNT(b) FROM TripBudget b",
+                    Long.class
+            ).getSingleResult();
+        } finally {
+            em.close();
+        }
+    }
+
+    private long countFlights() {
+        EntityManager em = emf.createEntityManager();
+
+        try {
+            return em.createQuery(
+                    "SELECT COUNT(f) FROM TripFlight f",
                     Long.class
             ).getSingleResult();
         } finally {

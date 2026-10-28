@@ -32,17 +32,17 @@ public class Trip {
     @Column(name = "search_json", columnDefinition = "text")
     private String searchJson;
 
+    // Beholdes til eksisterende endpoints og gamle rejser.
     @Column(name = "flight_json", columnDefinition = "text")
     private String flightJson;
 
-    // Midlertidig kopi til eksisterende kode og gamle rejser.
+    // Beholdes til eksisterende endpoints og gamle rejser.
     @Column(name = "hotel_json", columnDefinition = "text")
     private String hotelJson;
 
     @Column(name = "price_summary_json", columnDefinition = "text")
     private String priceSummaryJson;
 
-    // Beholdes som kopi af de gamle aktiviteter.
     @Column(name = "activities_json", columnDefinition = "text")
     private String activitiesJson;
 
@@ -70,6 +70,14 @@ public class Trip {
             orphanRemoval = true
     )
     private TripHotel hotel;
+
+    @OneToOne(
+            mappedBy = "trip",
+            fetch = FetchType.LAZY,
+            cascade = CascadeType.ALL,
+            orphanRemoval = true
+    )
+    private TripFlight flight;
 
     @Column(name = "created_at", nullable = false)
     private Instant createdAt;
@@ -130,7 +138,36 @@ public class Trip {
         this.priceSummaryJson = priceSummaryJson;
     }
 
-    // Beholdes, mens controller og DAO overgår til TripHotel.
+    public void updateFlightSnapshot(String flightJson) {
+        this.flightJson = flightJson;
+    }
+
+    public void changeFlight(TripFlight selected) {
+        if (selected == null) {
+            if (flight != null) {
+                flight.removeTrip();
+                flight = null;
+            }
+            return;
+        }
+
+        if (selected.getTrip() != this) {
+            throw new IllegalArgumentException(
+                    "Flyvalget skal tilhøre denne rejse."
+            );
+        }
+
+        if (flight == selected) {
+            return;
+        }
+
+        if (flight == null) {
+            flight = selected;
+        } else {
+            flight.updateFrom(selected);
+        }
+    }
+
     public void updateHotel(
             String hotelJson,
             String priceSummaryJson
@@ -139,19 +176,16 @@ public class Trip {
         this.priceSummaryJson = priceSummaryJson;
     }
 
-    // Opdaterer kun den gamle JSON-kopi af hotellet.
     public void updateHotelSnapshot(String hotelJson) {
         this.hotelJson = hotelJson;
     }
 
     public void changeHotel(TripHotel selected) {
-        // null betyder, at hotelvalget fjernes.
         if (selected == null) {
             if (hotel != null) {
                 hotel.removeTrip();
                 hotel = null;
             }
-
             return;
         }
 
@@ -177,13 +211,11 @@ public class Trip {
     }
 
     public void updateBudget(BigDecimal amount) {
-        // null betyder, at budgetgrænsen fjernes.
         if (amount == null) {
             if (budget != null) {
                 budget.removeTrip();
                 budget = null;
             }
-
             return;
         }
 
@@ -232,6 +264,10 @@ public class Trip {
 
     public TripHotel getHotel() {
         return hotel;
+    }
+
+    public TripFlight getFlight() {
+        return flight;
     }
 
     public BigDecimal getBudgetAmount() {

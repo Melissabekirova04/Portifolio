@@ -1,9 +1,11 @@
+
 package org.example.config;
 
 import jakarta.persistence.EntityManagerFactory;
 import org.example.entity.Activity;
 import org.example.entity.Trip;
 import org.example.entity.TripBudget;
+import org.example.entity.TripFlight;
 import org.example.entity.TripHotel;
 import org.example.entity.User;
 import org.hibernate.cfg.Configuration;
@@ -58,6 +60,7 @@ public class HibernateConfig {
                 .addAnnotatedClass(Activity.class)
                 .addAnnotatedClass(TripBudget.class)
                 .addAnnotatedClass(TripHotel.class)
+                .addAnnotatedClass(TripFlight.class)
                 .setProperty(
                         "hibernate.connection.driver_class",
                         "org.postgresql.Driver"

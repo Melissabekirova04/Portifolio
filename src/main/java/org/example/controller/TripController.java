@@ -1,4 +1,3 @@
-
 package org.example.controller;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
@@ -11,6 +10,7 @@ import io.javalin.http.BadRequestResponse;
 import io.javalin.http.NotFoundResponse;
 import org.example.dao.TripDAO;
 import org.example.entity.Trip;
+import org.example.entity.TripFlight;
 import org.example.entity.TripHotel;
 import org.example.security.SecurityMiddleware;
 import org.example.service.FlightService;
@@ -779,6 +779,16 @@ public class TripController {
         }
     }
 
+    private JsonNode flightToJson(Trip trip) {
+        TripFlight flight = trip.getFlight();
+
+        if (flight != null && flight.getFlightJson() != null) {
+            return readJsonOrNull(flight.getFlightJson());
+        }
+
+        return readJsonOrNull(trip.getFlightJson());
+    }
+
     private ObjectNode toResponse(Trip trip) {
         ObjectNode response = mapper.createObjectNode();
 
@@ -795,7 +805,7 @@ public class TripController {
         );
         response.set(
                 "flight",
-                readJsonOrNull(trip.getFlightJson())
+                flightToJson(trip)
         );
         response.set(
                 "hotel",

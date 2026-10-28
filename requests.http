@@ -85,3 +85,48 @@ Content-Type: application/json
   "category": "Test",
   "notes": ""
 }
+
+### Null som request — forvent 400
+POST {{baseUrl}}/api/trip-draft
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+null
+
+
+### Gyldig destination — forvent 201
+POST {{baseUrl}}/api/trip-draft
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "destination": "OSL"
+}
+
+
+### Decimal i antal voksne — forvent 400
+PUT {{baseUrl}}/api/trip-draft/details
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "origin": "CPH",
+  "startDate": "2026-11-20",
+  "endDate": "2026-11-25",
+  "adults": 1.5,
+  "directOnly": false
+}
+
+
+### Gyldige rejseoplysninger — forvent 200
+PUT {{baseUrl}}/api/trip-draft/details
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "origin": "CPH",
+  "startDate": "2026-11-20",
+  "endDate": "2026-11-25",
+  "adults": 1,
+  "directOnly": false
+}

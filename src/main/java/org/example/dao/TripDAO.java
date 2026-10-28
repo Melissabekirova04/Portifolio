@@ -9,6 +9,7 @@ import jakarta.persistence.EntityManagerFactory;
 import jakarta.persistence.LockModeType;
 import org.example.config.HibernateConfig;
 import org.example.entity.Trip;
+import org.example.entity.TripFlight;
 import org.example.entity.TripHotel;
 import org.example.entity.User;
 
@@ -63,9 +64,11 @@ public class TripDAO {
                     priceSummaryJson
             );
 
-            // Nye rejser gemmes både i TripHotel og i den
-            // midlertidige JSON-kopi.
-            if (hotelJson != null) {
+            if (hasJsonValue(flightJson)) {
+                syncFlightFromJson(trip);
+            }
+
+            if (hasJsonValue(hotelJson)) {
                 syncHotelFromJson(trip);
             }
 
@@ -91,6 +94,7 @@ public class TripDAO {
                     FROM Trip t
                     LEFT JOIN FETCH t.budget
                     LEFT JOIN FETCH t.hotel
+                    LEFT JOIN FETCH t.flight
                     WHERE t.user.id = :userId
                     ORDER BY t.createdAt DESC, t.id DESC
                     """, Trip.class)
@@ -98,7 +102,7 @@ public class TripDAO {
                     .getResultList();
 
             for (Trip trip : trips) {
-                initializeHotel(trip);
+                initializeRelations(trip);
             }
 
             return trips;
@@ -120,6 +124,7 @@ public class TripDAO {
                     FROM Trip t
                     LEFT JOIN FETCH t.budget
                     LEFT JOIN FETCH t.hotel
+                    LEFT JOIN FETCH t.flight
                     WHERE t.id = :tripId
                       AND t.user.id = :userId
                     """, Trip.class)
@@ -129,7 +134,7 @@ public class TripDAO {
                     .stream()
                     .findFirst();
 
-            result.ifPresent(this::initializeHotel);
+            result.ifPresent(this::initializeRelations);
 
             return result;
 
@@ -148,7 +153,6 @@ public class TripDAO {
         try {
             em.getTransaction().begin();
 
-            // Lås rejsen under opdateringen.
             List<Trip> results = em.createQuery("""
                     SELECT t
                     FROM Trip t
@@ -167,27 +171,28 @@ public class TripDAO {
 
             Trip trip = results.get(0);
 
-            // Initialiser relationerne, mens EntityManager er åben.
-            trip.getBudgetAmount();
-            initializeHotel(trip);
+            initializeRelations(trip);
 
+            String previousFlightJson = trip.getFlightJson();
             String previousHotelJson = trip.getHotelJson();
 
-            // Controlleren kan nu ændre TripHotel direkte.
             update.accept(trip);
 
-            boolean hotelJsonChanged = !Objects.equals(
+            if (!Objects.equals(
+                    previousFlightJson,
+                    trip.getFlightJson()
+            )) {
+                syncFlightFromJson(trip);
+            }
+
+            if (!Objects.equals(
                     previousHotelJson,
                     trip.getHotelJson()
-            );
-
-            // Kompatibilitet med ældre kode, som stadig
-            // opdaterer hotelJson via updateHotel().
-            if (hotelJsonChanged) {
+            )) {
                 syncHotelFromJson(trip);
             }
 
-            initializeHotel(trip);
+            initializeRelations(trip);
 
             em.getTransaction().commit();
 
@@ -201,12 +206,49 @@ public class TripDAO {
         }
     }
 
-    // Bruges kun ved oprettelse og ved ældre JSON-baserede
-    // hotelopdateringer.
+    private void syncFlightFromJson(Trip trip) {
+        String flightJson = trip.getFlightJson();
+
+        if (!hasJsonValue(flightJson)) {
+            trip.changeFlight(null);
+            return;
+        }
+
+        try {
+            JsonNode data = mapper.readTree(flightJson);
+
+            if (data == null || data.isNull()) {
+                trip.changeFlight(null);
+                return;
+            }
+
+            if (!data.isObject()) {
+                throw new IllegalArgumentException(
+                        "Flydata skal være et JSON-objekt."
+                );
+            }
+
+            // Gem hele flytilbuddet uden at miste detaljer.
+            // Vi kan senere udtrække de enkelte felter
+            // fra FlightService til separate kolonner.
+            TripFlight selected = new TripFlight(
+                    trip,
+                    flightJson
+            );
+
+            trip.changeFlight(selected);
+
+        } catch (JsonProcessingException e) {
+            throw new IllegalArgumentException(
+                    "Kunne ikke læse flydata.", e
+            );
+        }
+    }
+
     private void syncHotelFromJson(Trip trip) {
         String hotelJson = trip.getHotelJson();
 
-        if (hotelJson == null) {
+        if (!hasJsonValue(hotelJson)) {
             trip.changeHotel(null);
             return;
         }
@@ -277,6 +319,12 @@ public class TripDAO {
         }
     }
 
+    private boolean hasJsonValue(String json) {
+        return json != null
+                && !json.isBlank()
+                && !json.trim().equals("null");
+    }
+
     private String optionalText(JsonNode data, String field) {
         JsonNode value = data.path(field);
 
@@ -287,12 +335,19 @@ public class TripDAO {
         return value.asText();
     }
 
-    private void initializeHotel(Trip trip) {
+    private void initializeRelations(Trip trip) {
+        trip.getBudgetAmount();
+
         TripHotel hotel = trip.getHotel();
 
         if (hotel != null) {
-            // Indlæs faciliteter, inden EntityManager lukkes.
-            hotel.getAmenities();
+            hotel.getAmenities().size();
+        }
+
+        TripFlight flight = trip.getFlight();
+
+        if (flight != null) {
+            flight.getFlightJson();
         }
     }
 
