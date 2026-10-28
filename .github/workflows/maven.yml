@@ -23,5 +23,8 @@ jobs:
           distribution: 'temurin'
           cache: maven
 
+
       - name: Build with Maven
+        env:
+          JWT_SECRET: "ci-test-secret-only-not-for-production-2026"
         run: mvn clean verify
