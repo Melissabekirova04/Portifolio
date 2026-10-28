@@ -1,5 +1,5 @@
 ---
-title: "Travel Planner API"
+title: "Travel Planner"
 category: "3rd Semester · Backend"
 summary: "A Java backend for travel planning with weather data, user accounts and PostgreSQL."
 weight: 1
