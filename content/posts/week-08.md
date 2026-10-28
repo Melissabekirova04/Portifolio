@@ -1,66 +1,124 @@
+
 ---
-title: "Week 8 – Destination Search, Flights and Inspiration"
+title: "Week 8 – Security"
 date: 2026-10-07
 draft: false
+summary: "Understanding backend security through password hashing, session-based authentication and protected resources in Travel Planner."
 ---
 
-This week, I worked on US2 and US3 in my Travel Planner backend. I added destination search, integrated flight offers, saved trips in PostgreSQL and added destination inspiration.
+## 1. Topic and Project Connection
 
-## US2 – Search for a destination
+During the eighth week, we focused on security and how backend applications can protect user accounts and personal information.
 
-I created a catalogue of 12 destinations across Denmark, Norway and Sweden. Users can search by city, country or airport code, including Danish names such as “København” and “Norge”.
+Security is an important part of my Travel Planner project because users can create accounts, log in and save their personal travel plans.
 
-Users can select a destination and start a trip draft. The draft is stored in their session while they continue planning.
+The backend must ensure that passwords are stored securely and that users cannot access another user's saved trips.
 
-## Flight search with Duffel
+In Travel Planner, I work with security through password hashing, session-based authentication, input validation and protected endpoints.
 
-I integrated the Duffel API to search for one-way economy flights. Users can specify their departure airport, destination, departure date and number of adults.
+These features help protect user information and control access to the application's functionality.
 
-The API returns offers containing prices, airlines, flight segments and departure and arrival times. Users can choose an offer from their latest search, and the backend checks that it has not expired.
+## 2. Security in Backend Development
 
-I used Duffel’s test environment. Selecting or saving an offer does not book a real flight.
+Backend security involves protecting data, verifying user identities and controlling access to resources.
 
-## Saving trips in PostgreSQL
+Some important security concepts include:
 
-I added a Trip entity, a TripDAO and a TripController so logged-in users can save and retrieve their trips.
+- **Authentication:** Verifying who a user is.
+- **Authorization:** Determining which resources an authenticated user can access.
+- **Password hashing:** Storing passwords as secure hashes instead of plain text.
+- **Session management:** Maintaining the user's authenticated state across HTTP requests.
+- **Input validation:** Checking incoming data before processing or storing it.
+- **Access control:** Preventing users from accessing resources they do not have permission to use.
 
-The trip is linked to the user through user_id. The backend uses the user ID from the login session when saving and retrieving trips.
+Authentication and authorization are different concepts.
 
-The destination, search criteria and selected flight offer are stored as JSON text. This preserves the planning information, but separate database columns would make it easier to query individual details later.
+Authentication confirms the user's identity, while authorization determines what that user is allowed to do.
 
-I tested saving a destination on its own and saving a destination with a selected flight. Both could be retrieved through the API.
+Both are important in Travel Planner because users must log in before accessing their personal trips.
 
-## US3 – Destination information and inspiration
+## 3. How I Use Security in Travel Planner
 
-I added an endpoint that returns a short description, three suggested areas and an image link for each destination.
+### Password Hashing
 
-The descriptions and areas are maintained in my own catalogue. Images are retrieved through Wikipedia’s API. If an image cannot be retrieved, the endpoint still returns the description and areas with an image status of “unavailable”.
+When a user registers, the backend receives their name, email and password.
 
-Users can continue planning by selecting the destination through the existing trip-draft endpoint.
+Instead of storing the password directly in PostgreSQL, I use the Password4j library with bcrypt to hash it.
 
-This completes the backend functionality for destination inspiration. A frontend will later display the images, descriptions and a button for starting a trip.
+The database stores the password hash rather than the original password.
 
-## Testing and troubleshooting
+During login, the submitted password is checked against the stored hash.
 
-I tested the endpoints manually with curl. A cookie file preserved the login session between requests.
+This protects user passwords by avoiding plain-text password storage.
 
-The tested flow included:
+### Session-Based Authentication
 
-- Creating an account and logging in.
-- Selecting Oslo as a destination.
-- Searching for flights and selecting an offer.
-- Saving the trip and retrieving it with the flight information.
-- Retrieving Oslo’s description, suggested areas and image link.
-- Starting a new trip draft after viewing destination inspiration.
+Travel Planner uses server-side sessions to maintain authentication.
 
-During development, PostgreSQL was not running, which caused a connection error and prevented the application from starting. Starting the database resolved the problem.
+The authentication process works as follows:
 
-I also received a 404 response when trying to save a trip. The cause was that TripController had not been registered in Main. Registering the controller and restarting the application made the endpoint available.
+1. The user sends their email and password to the login endpoint.
+2. The backend validates the credentials.
+3. After successful authentication, the user's ID is stored in the session.
+4. The client receives a session cookie.
+5. The session cookie is included in later requests.
+6. The backend uses the session to identify the authenticated user.
 
-## Reflection
+This allows users to remain authenticated across multiple HTTP requests without submitting their password each time.
 
-This week helped me understand how controllers, services and DAOs work together. Controllers handle requests, services provide destination information and external API integration, and DAOs handle database access.
+### Protected REST Endpoints
 
-I also gained experience with sessions, validation and error handling. Testing the complete flow helped me check that the features worked together, from choosing a destination to retrieving a saved trip.
+I use authentication checks to protect endpoints that require a logged-in user.
 
-The next step is to add more validation tests and continue developing the remaining user stories.
+For example:
+
+- `POST /api/auth/register` – Creates a user account.
+- `POST /api/auth/login` – Authenticates a user.
+- `POST /api/auth/logout` – Ends the authenticated session.
+- `GET /api/auth/me` – Returns the authenticated user's ID.
+- `POST /api/trips` – Saves a trip for the logged-in user.
+- `GET /api/trips` – Retrieves the logged-in user's saved trips.
+
+If an unauthenticated user tries to access a protected endpoint, the backend returns HTTP 401 Unauthorized.
+
+This prevents access to protected functionality without a valid session.
+
+### Authorization and User Data
+
+In Travel Planner, each saved trip is associated with a user through `user_id`.
+
+When saving or retrieving trips, the backend uses the user ID from the authenticated session.
+
+This is important because the backend should not rely on a user ID supplied by the client to decide who owns a trip.
+
+By using the authenticated user's ID, the application can restrict access to that user's own travel information.
+
+### Input Validation
+
+Input validation is another part of the application's security.
+
+During registration, the backend validates information such as:
+
+- Required fields.
+- Email format.
+- Unique email addresses.
+
+Validation helps prevent invalid data from being stored and provides appropriate responses when a request does not meet the requirements.
+
+## 4. Reflection
+
+During this week, I gained a better understanding of how security is implemented in a Java backend.
+
+One of the most important things I learned was the difference between authentication and authorization.
+
+A user being logged in does not automatically mean they should have access to every resource in the application.
+
+I also learned why passwords should be hashed before being stored in a database and how bcrypt can be used for password verification.
+
+Working with session-based authentication helped me understand how a backend can identify users across multiple HTTP requests.
+
+In Travel Planner, connecting saved trips to the authenticated user is especially important because personal travel information should not be accessible to other users.
+
+Security also needs to be considered when developing new features, rather than being added only at the end of a project.
+
+This week helped me understand how password protection, authentication, authorization and validation work together to make a backend application more secure.
