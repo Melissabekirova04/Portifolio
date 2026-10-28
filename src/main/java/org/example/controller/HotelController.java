@@ -1,7 +1,11 @@
 package org.example.controller;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.core.exc.StreamReadException;
+import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.json.JsonMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import io.javalin.Javalin;
 import io.javalin.http.BadGatewayResponse;
@@ -27,7 +31,10 @@ public class HotelController {
             new BigDecimal("7.50");
 
     private final HotelService hotelService = new HotelService();
-    private final ObjectMapper mapper = new ObjectMapper();
+
+    private final ObjectMapper mapper = JsonMapper.builder()
+            .enable(DeserializationFeature.FAIL_ON_TRAILING_TOKENS)
+            .build();
 
     public record HotelChoice(String hotelId) {}
 
@@ -66,11 +73,7 @@ public class HotelController {
             SecurityMiddleware.requireUserId(ctx);
             Stay stay = requireStay(ctx);
 
-            HotelChoice input = ctx.bodyAsClass(HotelChoice.class);
-
-            if (input.hotelId() == null || input.hotelId().isBlank()) {
-                throw new BadRequestResponse("hotelId mangler.");
-            }
+            HotelChoice input = readHotelChoice(ctx);
 
             List<HotelOffer> offers =
                     ctx.sessionAttribute("hotelOffers");
@@ -108,9 +111,8 @@ public class HotelController {
             BigDecimal change = selected.totalAmount()
                     .subtract(previousAmount);
 
-            ctx.sessionAttribute("selectedHotel", selected);
-
-            ObjectNode response = summary(ctx, stay);
+            // Beregn svaret, før hotelvalget ændres.
+            ObjectNode response = summary(ctx, stay, selected);
 
             response.put(
                     "message",
@@ -122,6 +124,8 @@ public class HotelController {
             response.put("hotelPriceChange", change);
             response.put("hotelPriceChangeCurrency", "DKK");
 
+            ctx.sessionAttribute("selectedHotel", selected);
+
             ctx.json(response);
         });
 
@@ -131,9 +135,8 @@ public class HotelController {
 
             HotelOffer previous = currentHotel(ctx, stay);
 
-            ctx.sessionAttribute("selectedHotel", null);
-
-            ObjectNode response = summary(ctx, stay);
+            // Beregn svaret uden hotel, før valget fjernes.
+            ObjectNode response = summary(ctx, stay, null);
 
             response.put("message", "Hotellet er fjernet.");
 
@@ -145,6 +148,8 @@ public class HotelController {
             );
 
             response.put("hotelPriceChangeCurrency", "DKK");
+
+            ctx.sessionAttribute("selectedHotel", null);
 
             ctx.json(response);
         });
@@ -182,6 +187,45 @@ public class HotelController {
                 clearHotel(ctx);
             }
         });
+    }
+
+    // Læs hotelvalget og afvis ugyldigt JSON eller forkert datatype.
+    private HotelChoice readHotelChoice(Context ctx)
+            throws JsonProcessingException {
+
+        JsonNode body;
+
+        try {
+            body = mapper.readTree(ctx.body());
+
+        } catch (StreamReadException e) {
+            throw new BadRequestResponse(
+                    "Ugyldigt JSON-format. Kontrollér dit input."
+            );
+
+        } catch (com.fasterxml.jackson.databind.exc.MismatchedInputException e) {
+            throw new BadRequestResponse(
+                    "Requesten skal indeholde ét JSON-objekt."
+            );
+        }
+
+        if (body == null || !body.isObject()) {
+            throw new BadRequestResponse(
+                    "Requesten skal indeholde et JSON-objekt."
+            );
+        }
+
+        JsonNode hotelId = body.get("hotelId");
+
+        if (hotelId == null
+                || !hotelId.isTextual()
+                || hotelId.asText().isBlank()) {
+            throw new BadRequestResponse(
+                    "hotelId skal være en tekstværdi og må ikke være tom."
+            );
+        }
+
+        return new HotelChoice(hotelId.asText());
     }
 
     private void clearHotel(Context ctx) {
@@ -275,7 +319,14 @@ public class HotelController {
     }
 
     private ObjectNode summary(Context ctx, Stay stay) {
-        HotelOffer hotel = currentHotel(ctx, stay);
+        return summary(ctx, stay, currentHotel(ctx, stay));
+    }
+
+    private ObjectNode summary(
+            Context ctx,
+            Stay stay,
+            HotelOffer hotel
+    ) {
         JsonNode flight = ctx.sessionAttribute("selectedFlight");
 
         ObjectNode response = mapper.createObjectNode();
@@ -292,6 +343,7 @@ public class HotelController {
 
         if (flight == null || flight.isNull()) {
             response.putNull("flight");
+
         } else {
             BigDecimal originalAmount;
 
@@ -299,6 +351,7 @@ public class HotelController {
                 originalAmount = new BigDecimal(
                         flight.path("total_amount").asText()
                 );
+
             } catch (NumberFormatException e) {
                 throw new BadGatewayResponse(
                         "Flytilbuddet har en ugyldig pris."
@@ -325,6 +378,7 @@ public class HotelController {
             flightSummary.put("offerId", flight.path("id").asText());
             flightSummary.put("originalAmount", originalAmount);
             flightSummary.put("originalCurrency", originalCurrency);
+
             flightSummary.put(
                     "expiresAt",
                     flight.path("expires_at").asText()
@@ -379,6 +433,7 @@ public class HotelController {
                     flightDkk.add(hotelDkk)
                             .setScale(2, RoundingMode.HALF_UP)
             );
+
         } else {
             response.putNull("totalAmount");
 

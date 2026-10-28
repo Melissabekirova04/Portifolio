@@ -1,3 +1,4 @@
+
 package org.example.entity;
 
 import jakarta.persistence.*;
@@ -34,7 +35,7 @@ public class Trip {
     @Column(name = "flight_json", columnDefinition = "text")
     private String flightJson;
 
-    // Beholdes, indtil hoteldata er overført til den nye tabel.
+    // Midlertidig kopi til eksisterende kode og gamle rejser.
     @Column(name = "hotel_json", columnDefinition = "text")
     private String hotelJson;
 
@@ -129,13 +130,18 @@ public class Trip {
         this.priceSummaryJson = priceSummaryJson;
     }
 
-    // Bruges af den eksisterende kode under overgangen.
+    // Beholdes, mens controller og DAO overgår til TripHotel.
     public void updateHotel(
             String hotelJson,
             String priceSummaryJson
     ) {
         this.hotelJson = hotelJson;
         this.priceSummaryJson = priceSummaryJson;
+    }
+
+    // Opdaterer kun den gamle JSON-kopi af hotellet.
+    public void updateHotelSnapshot(String hotelJson) {
+        this.hotelJson = hotelJson;
     }
 
     public void changeHotel(TripHotel selected) {

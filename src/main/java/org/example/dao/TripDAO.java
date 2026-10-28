@@ -1,3 +1,4 @@
+
 package org.example.dao;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
@@ -62,9 +63,12 @@ public class TripDAO {
                     priceSummaryJson
             );
 
-            syncHotel(trip);
+            // Nye rejser gemmes både i TripHotel og i den
+            // midlertidige JSON-kopi.
+            if (hotelJson != null) {
+                syncHotelFromJson(trip);
+            }
 
-            // Cascade gemmer også rejsens hotel.
             em.persist(trip);
             em.getTransaction().commit();
 
@@ -144,7 +148,7 @@ public class TripDAO {
         try {
             em.getTransaction().begin();
 
-            // Lås rejsen, før den ændres.
+            // Lås rejsen under opdateringen.
             List<Trip> results = em.createQuery("""
                     SELECT t
                     FROM Trip t
@@ -163,23 +167,24 @@ public class TripDAO {
 
             Trip trip = results.get(0);
 
+            // Initialiser relationerne, mens EntityManager er åben.
             trip.getBudgetAmount();
             initializeHotel(trip);
 
             String previousHotelJson = trip.getHotelJson();
 
+            // Controlleren kan nu ændre TripHotel direkte.
             update.accept(trip);
 
-            boolean hotelChanged = !Objects.equals(
+            boolean hotelJsonChanged = !Objects.equals(
                     previousHotelJson,
                     trip.getHotelJson()
             );
 
-            boolean hotelMissing = trip.getHotel() == null
-                    && trip.getHotelJson() != null;
-
-            if (hotelChanged || hotelMissing) {
-                syncHotel(trip);
+            // Kompatibilitet med ældre kode, som stadig
+            // opdaterer hotelJson via updateHotel().
+            if (hotelJsonChanged) {
+                syncHotelFromJson(trip);
             }
 
             initializeHotel(trip);
@@ -196,8 +201,9 @@ public class TripDAO {
         }
     }
 
-    // Midlertidig overgang fra hotelJson til TripHotel.
-    private void syncHotel(Trip trip) {
+    // Bruges kun ved oprettelse og ved ældre JSON-baserede
+    // hotelopdateringer.
+    private void syncHotelFromJson(Trip trip) {
         String hotelJson = trip.getHotelJson();
 
         if (hotelJson == null) {
@@ -240,8 +246,12 @@ public class TripDAO {
                     data.path("name").asText(),
                     data.path("destination").asText(),
                     data.path("city").asText(),
-                    LocalDate.parse(data.path("checkIn").asText()),
-                    LocalDate.parse(data.path("checkOut").asText()),
+                    LocalDate.parse(
+                            data.path("checkIn").asText()
+                    ),
+                    LocalDate.parse(
+                            data.path("checkOut").asText()
+                    ),
                     data.path("adults").asInt(),
                     data.path("rooms").asInt(),
                     new BigDecimal(
@@ -281,7 +291,7 @@ public class TripDAO {
         TripHotel hotel = trip.getHotel();
 
         if (hotel != null) {
-            // Hent faciliteter, mens EntityManager er åben.
+            // Indlæs faciliteter, inden EntityManager lukkes.
             hotel.getAmenities();
         }
     }

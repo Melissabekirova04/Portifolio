@@ -1,7 +1,13 @@
 package org.example.controller;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.core.exc.StreamReadException;
+import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.MapperFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.exc.MismatchedInputException;
+import com.fasterxml.jackson.databind.json.JsonMapper;
 import io.javalin.Javalin;
 import io.javalin.http.BadGatewayResponse;
 import io.javalin.http.BadRequestResponse;
@@ -21,7 +27,13 @@ import java.util.Map;
 public class DestinationController {
 
     private final FlightService flightService = new FlightService();
-    private final ObjectMapper mapper = new ObjectMapper();
+
+    // Afvis fx adults: 1.5 og directOnly: "ja".
+    private final ObjectMapper mapper = JsonMapper.builder()
+            .disable(DeserializationFeature.ACCEPT_FLOAT_AS_INT)
+            .disable(MapperFeature.ALLOW_COERCION_OF_SCALARS)
+            .enable(DeserializationFeature.FAIL_ON_TRAILING_TOKENS)
+            .build();
 
     public record Destination(
             String city,
@@ -61,44 +73,35 @@ public class DestinationController {
                     "Århus Danmark"
             ),
             new Destination(
-                    "Aalborg", "Denmark", "AAL",
-                    "Danmark"
+                    "Aalborg", "Denmark", "AAL", "Danmark"
             ),
             new Destination(
-                    "Billund", "Denmark", "BLL",
-                    "Danmark"
+                    "Billund", "Denmark", "BLL", "Danmark"
             ),
             new Destination(
-                    "Oslo", "Norway", "OSL",
-                    "Norge"
+                    "Oslo", "Norway", "OSL", "Norge"
             ),
             new Destination(
-                    "Bergen", "Norway", "BGO",
-                    "Norge"
+                    "Bergen", "Norway", "BGO", "Norge"
             ),
             new Destination(
-                    "Trondheim", "Norway", "TRD",
-                    "Norge"
+                    "Trondheim", "Norway", "TRD", "Norge"
             ),
             new Destination(
-                    "Stavanger", "Norway", "SVG",
-                    "Norge"
+                    "Stavanger", "Norway", "SVG", "Norge"
             ),
             new Destination(
-                    "Stockholm", "Sweden", "ARN",
-                    "Sverige"
+                    "Stockholm", "Sweden", "ARN", "Sverige"
             ),
             new Destination(
                     "Gothenburg", "Sweden", "GOT",
                     "Göteborg Sverige"
             ),
             new Destination(
-                    "Malmö", "Sweden", "MMX",
-                    "Malmo Sverige"
+                    "Malmö", "Sweden", "MMX", "Malmo Sverige"
             ),
             new Destination(
-                    "Umeå", "Sweden", "UME",
-                    "Umea Sverige"
+                    "Umeå", "Sweden", "UME", "Umea Sverige"
             )
     );
 
@@ -123,7 +126,7 @@ public class DestinationController {
 
         // Trin 1: Vælg destination og start en ny kladde.
         app.post("/api/trip-draft", ctx -> {
-            TripChoice input = ctx.bodyAsClass(TripChoice.class);
+            TripChoice input = readRequest(ctx, TripChoice.class);
 
             Destination destination =
                     findDestination(input.destination());
@@ -139,7 +142,7 @@ public class DestinationController {
         // Trin 2: Vælg datoer, afrejselufthavn og flytype.
         app.put("/api/trip-draft/details", ctx -> {
             Destination destination = requireDestination(ctx);
-            TripDetails input = ctx.bodyAsClass(TripDetails.class);
+            TripDetails input = readRequest(ctx, TripDetails.class);
 
             Destination origin = findDestination(input.origin());
 
@@ -158,9 +161,7 @@ public class DestinationController {
                     input.endDate(), "endDate"
             );
 
-            if (startDate.isBefore(
-                    LocalDate.now(ZoneId.of("Europe/Copenhagen"))
-            )) {
+            if (startDate.isBefore(today())) {
                 throw new BadRequestResponse(
                         "Startdatoen må ikke være i fortiden."
                 );
@@ -193,15 +194,12 @@ public class DestinationController {
             );
 
             ctx.sessionAttribute("flightSearch", search);
-
-            // Nye rejseoplysninger rydder tidligere flyvalg.
             clearFlightSelection(ctx);
 
             ctx.json(search);
         });
 
         // Trin 3: Søg efter fly tur/retur.
-        // Oplysningerne hentes fra sessionen.
         app.post("/api/flights/search", ctx -> {
             Destination destination = requireDestination(ctx);
 
@@ -226,9 +224,7 @@ public class DestinationController {
                     search.departureDate(), "startDate"
             );
 
-            if (departureDate.isBefore(
-                    LocalDate.now(ZoneId.of("Europe/Copenhagen"))
-            )) {
+            if (departureDate.isBefore(today())) {
                 throw new BadRequestResponse(
                         "Startdatoen er passeret. Vælg nye datoer."
                 );
@@ -246,7 +242,6 @@ public class DestinationController {
             );
 
             JsonNode offers = result.path("offers");
-
             ctx.sessionAttribute("flightOffers", offers);
 
             String message;
@@ -272,7 +267,8 @@ public class DestinationController {
         app.post("/api/trip-draft/flight", ctx -> {
             requireDestination(ctx);
 
-            FlightChoice input = ctx.bodyAsClass(FlightChoice.class);
+            FlightChoice input =
+                    readRequest(ctx, FlightChoice.class);
 
             if (input.offerId() == null || input.offerId().isBlank()) {
                 throw new BadRequestResponse("offerId mangler.");
@@ -341,6 +337,27 @@ public class DestinationController {
         });
     }
 
+    private <T> T readRequest(Context ctx, Class<T> type)
+            throws JsonProcessingException {
+
+        try {
+            T input = mapper.readValue(ctx.body(), type);
+
+            if (input == null) {
+                throw new BadRequestResponse(
+                        "Requesten skal indeholde et JSON-objekt."
+                );
+            }
+
+            return input;
+
+        } catch (StreamReadException | MismatchedInputException e) {
+            throw new BadRequestResponse(
+                    "Ugyldigt input. Kontrollér JSON-format og datatyper."
+            );
+        }
+    }
+
     private void clearFlightSelection(Context ctx) {
         ctx.sessionAttribute("flightOffers", null);
         ctx.sessionAttribute("selectedFlight", null);
@@ -380,13 +397,23 @@ public class DestinationController {
             throw new BadRequestResponse(field + " mangler.");
         }
 
-        try {
-            return LocalDate.parse(value);
-        } catch (DateTimeParseException e) {
+        if (!value.matches("\\d{4}-\\d{2}-\\d{2}")) {
             throw new BadRequestResponse(
                     field + " skal have formatet YYYY-MM-DD."
             );
         }
+
+        try {
+            return LocalDate.parse(value);
+        } catch (DateTimeParseException e) {
+            throw new BadRequestResponse(
+                    field + " indeholder en ugyldig dato."
+            );
+        }
+    }
+
+    private LocalDate today() {
+        return LocalDate.now(ZoneId.of("Europe/Copenhagen"));
     }
 
     private static String normalize(String value) {

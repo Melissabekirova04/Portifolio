@@ -1,3 +1,4 @@
+
 package org.example.controller;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
@@ -10,6 +11,7 @@ import io.javalin.http.BadRequestResponse;
 import io.javalin.http.NotFoundResponse;
 import org.example.dao.TripDAO;
 import org.example.entity.Trip;
+import org.example.entity.TripHotel;
 import org.example.security.SecurityMiddleware;
 import org.example.service.FlightService;
 import org.example.service.HotelService;
@@ -21,6 +23,7 @@ import java.time.Instant;
 import java.time.LocalDate;
 import java.time.ZoneId;
 import java.time.format.DateTimeParseException;
+import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -227,8 +230,7 @@ public class TripController {
                         );
                         validateFlight(selected);
 
-                        JsonNode hotel =
-                                readJsonOrNull(trip.getHotelJson());
+                        JsonNode hotel = hotelToJson(trip);
 
                         trip.updateFlight(
                                 toJson(selected),
@@ -249,8 +251,7 @@ public class TripController {
                     tripId,
                     userId,
                     trip -> {
-                        JsonNode hotel =
-                                readJsonOrNull(trip.getHotelJson());
+                        JsonNode hotel = hotelToJson(trip);
 
                         trip.updateFlight(
                                 null,
@@ -293,8 +294,6 @@ public class TripController {
                 throw new BadRequestResponse("hotelId mangler.");
             }
 
-            // Ejerskab kontrolleres igen under databaselåsen.
-            // Hotel og pris beregnes ud fra den gemte rejse.
             Trip updated = tripDAO.updateOwnedTrip(
                     tripId,
                     userId,
@@ -312,11 +311,18 @@ public class TripController {
                         JsonNode flight =
                                 readJsonOrNull(trip.getFlightJson());
 
-                        JsonNode hotel = mapper.valueToTree(selected);
+                        TripHotel selectedHotel =
+                                toTripHotel(trip, selected);
 
-                        // Det allerede gemte fly bevares.
-                        trip.updateHotel(
-                                toJson(selected),
+                        trip.changeHotel(selectedHotel);
+
+                        // Midlertidig JSON-kopi til eksisterende rejser.
+                        trip.updateHotelSnapshot(toJson(selected));
+
+                        JsonNode hotel = hotelToJson(trip);
+
+                        trip.updateFlight(
+                                trip.getFlightJson(),
                                 toJson(createPriceSummary(flight, hotel))
                         );
                     }
@@ -339,8 +345,11 @@ public class TripController {
                         JsonNode flight =
                                 readJsonOrNull(trip.getFlightJson());
 
-                        trip.updateHotel(
-                                null,
+                        trip.changeHotel(null);
+                        trip.updateHotelSnapshot(null);
+
+                        trip.updateFlight(
+                                trip.getFlightJson(),
                                 toJson(createPriceSummary(flight, null))
                         );
                     }
@@ -390,6 +399,92 @@ public class TripController {
         } catch (IllegalArgumentException e) {
             throw new BadRequestResponse(e.getMessage());
         }
+    }
+
+    private TripHotel toTripHotel(Trip trip, HotelOffer offer) {
+        return new TripHotel(
+                trip,
+                offer.id(),
+                offer.name(),
+                offer.destination(),
+                offer.city(),
+                LocalDate.parse(offer.checkIn()),
+                LocalDate.parse(offer.checkOut()),
+                offer.adults(),
+                offer.rooms(),
+                offer.pricePerRoomPerNight(),
+                offer.totalAmount(),
+                offer.currency(),
+                offer.testData(),
+                offer.rating(),
+                offer.address(),
+                offer.locationDescription(),
+                offer.amenities()
+        );
+    }
+
+    // Læs først fra TripHotel, og brug gammel JSON som fallback.
+    private JsonNode hotelToJson(Trip trip) {
+        TripHotel hotel = trip.getHotel();
+
+        if (hotel == null) {
+            return readJsonOrNull(trip.getHotelJson());
+        }
+
+        ObjectNode result = mapper.createObjectNode();
+
+        result.put("id", hotel.getHotelId());
+        result.put("name", hotel.getName());
+        result.put("destination", hotel.getDestination());
+        result.put("city", hotel.getCity());
+        result.put("checkIn", hotel.getCheckIn().toString());
+        result.put("checkOut", hotel.getCheckOut().toString());
+        result.put("adults", hotel.getAdults());
+        result.put("rooms", hotel.getRooms());
+
+        result.put(
+                "nights",
+                ChronoUnit.DAYS.between(
+                        hotel.getCheckIn(),
+                        hotel.getCheckOut()
+                )
+        );
+
+        result.put(
+                "pricePerRoomPerNight",
+                hotel.getPricePerRoomPerNight()
+        );
+        result.put("totalAmount", hotel.getTotalAmount());
+        result.put("currency", hotel.getCurrency());
+        result.put("testData", hotel.isTestData());
+
+        if (hotel.getRating() == null) {
+            result.putNull("rating");
+        } else {
+            result.put("rating", hotel.getRating());
+        }
+
+        if (hotel.getAddress() == null) {
+            result.putNull("address");
+        } else {
+            result.put("address", hotel.getAddress());
+        }
+
+        if (hotel.getLocationDescription() == null) {
+            result.putNull("locationDescription");
+        } else {
+            result.put(
+                    "locationDescription",
+                    hotel.getLocationDescription()
+            );
+        }
+
+        result.set(
+                "amenities",
+                mapper.valueToTree(hotel.getAmenities())
+        );
+
+        return result;
     }
 
     private JsonNode findOffer(JsonNode offers, String offerId) {
@@ -704,7 +799,7 @@ public class TripController {
         );
         response.set(
                 "hotel",
-                readJsonOrNull(trip.getHotelJson())
+                hotelToJson(trip)
         );
         response.set(
                 "priceSummary",
