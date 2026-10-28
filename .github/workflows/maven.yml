@@ -1,3 +1,4 @@
+
 name: Java CI with Maven
 
 on:
@@ -12,6 +13,21 @@ jobs:
   build:
     runs-on: ubuntu-latest
 
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_DB: travelplanner_test
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: testpassword
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres -d travelplanner_test"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -23,8 +39,9 @@ jobs:
           distribution: 'temurin'
           cache: maven
 
-
-      - name: Build with Maven
+      - name: Build and test with Maven
         env:
-          JWT_SECRET: "ci-test-secret-only-not-for-production-2026"
+          DB_USERNAME: postgres
+          DB_PASSWORD: testpassword
+          JWT_SECRET: "Y2ktdGVzdC1zZWNyZXQtb25seS1ub3QtZm9yLXByb2R1Y3Rpb24tMjAyNg=="
         run: mvn clean verify
