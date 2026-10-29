@@ -1,4 +1,3 @@
-
 @baseUrl = http://157.230.115.167
 @tripId = 5
 
@@ -15,10 +14,15 @@ POST {{baseUrl}}/api/auth/login
 Content-Type: application/json
 
 {
-  "email": "{{email}}",
-  "password": "{{password}}"
+  "email": "deploytest@example.com",
+  "password": "Test12345!"
 }
 
+> {%
+    if (response.status === 200 && response.body.token) {
+        client.global.set("token", response.body.token);
+    }
+%}
 
 > {%
     client.global.clear("token");
@@ -185,16 +189,16 @@ POST {{baseUrl}}/api/auth/login
 Content-Type: application/json
 
 {
-  "email": "us1test20261028@example.com",
+  "email": "deploytest@example.com",
   "password": "Test12345!"
 }
 
 > {%
     if (response.status === 200 && response.body.token) {
         client.global.set("us1token", response.body.token);
+        client.global.set("token", response.body.token);
     }
 %}
-
 
 ### US1.5 - Hent bruger med JWT - forvent 200
 GET {{baseUrl}}/api/auth/me
