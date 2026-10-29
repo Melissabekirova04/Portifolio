@@ -225,107 +225,145 @@ Denne opdeling gør det lettere at organisere data og arbejde med relationer, me
 
 ## 8. API-dokumentation
 
-Travel Planner anvender et REST API, hvor data udveksles i JSON-format.
+Travel Planner tilbyder et REST API, hvor requests og responses som udgangspunkt bruger JSON. De følgende **43 endpoints** er registreret i projektets 10 controllers. Eksemplerne viser udvalgte felter; de er ikke en fuldstændig specifikation af alle JSON-responses.
 
-API'et er opdelt efter funktionalitet og håndterer blandt andet brugerautentificering, rejser, fly, hoteller, aktiviteter og vejroplysninger.
-
-### Authentication
+### Authentication (4 endpoints)
 
 | Metode | Endpoint | Formål |
 |---|---|---|
-| POST | `/api/auth/register` | Opret en bruger |
-| POST | `/api/auth/login` | Log ind |
-| POST | `/api/auth/logout` | Log ud |
-| GET | `/api/auth/me` | Hent oplysninger om den aktuelle bruger |
+| POST | `/api/auth/register` | Registrer bruger (`201 Created`) |
+| POST | `/api/auth/login` | Log ind og modtag JWT (`200 OK`) |
+| GET | `/api/auth/me` | Hent den aktuelle brugers ID |
+| POST | `/api/auth/logout` | Afslut HTTP-session |
 
-**Eksempel på registrering**
+Registrering kræver navn, gyldig e-mail og adgangskode. E-mail skal være unik (`409 Conflict` ved dublet), og adgangskoder hashes med bcrypt. Login returnerer blandt andet `token`, `tokenType` og `expiresIn`. Beskyttede endpoints kræver autentificering; systemet anvender JWT og HTTP-sessioner til blandt andet rejsekladder. Logout invaliderer sessionen, men tilbagekalder ikke nødvendigvis allerede udstedte JWT'er.
 
-```http
-POST /api/auth/register
-Content-Type: application/json
-```
-
-Ved vellykket registrering returnerer API'et statuskoden `201 Created`.
-
-### Trips
+### Destinationssøgning og rejsekladde (4 endpoints)
 
 | Metode | Endpoint | Formål |
 |---|---|---|
-| POST | `/api/trips` | Opret og gem en rejse |
-| GET | `/api/trips` | Hent brugerens gemte rejser |
-| GET | `/api/trips/{id}` | Hent en bestemt rejse |
+| GET | `/api/destinations?search=Oslo` | Søg destinationer i Danmark, Norge og Sverige |
+| POST | `/api/trip-draft` | Vælg destination med f.eks. `{"destination":"OSL"}` (`201 Created`) |
+| PUT | `/api/trip-draft/details` | Angiv afrejselufthavn, datoer, antal voksne og direkte fly |
+| GET | `/api/trip-draft` | Hent den aktuelle rejsekladde |
 
-**Eksempel på rejseoplysninger**
+Eksempel på `PUT /api/trip-draft/details`:
 
 ```json
 {
-  "destination": {
-    "city": "Oslo",
-    "country": "Norway",
-    "airportCode": "OSL"
-  },
-  "search": {
-    "origin": "CPH",
-    "destination": "OSL",
-    "departureDate": "2026-11-20",
-    "returnDate": "2026-11-25",
-    "adults": 1,
-    "directOnly": false
-  }
+  "origin": "CPH",
+  "startDate": "2026-11-20",
+  "endDate": "2026-11-25",
+  "adults": 1,
+  "directOnly": false
 }
 ```
 
-Eksemplet viser udvalgte oplysninger fra en rejse.
+Datoer angives som `YYYY-MM-DD`. Antal voksne skal være et heltal fra 1 til 9, og slutdatoen skal ligge efter startdatoen.
 
-### Flights
+### Destinationsinformation og oplevelser (4 endpoints)
 
 | Metode | Endpoint | Formål |
 |---|---|---|
-| POST | `/api/trip-draft/flight` | Søg efter flytilbud til en rejsekladde |
+| GET | `/api/destinations/{airportCode}` | Hent destinationsinformation og inspiration |
+| GET | `/api/experience-categories` | Hent interessekategorier |
+| GET | `/api/destinations/{code}/experiences` | Hent og filtrer lokale oplevelser |
+| GET | `/api/experiences/{id}` | Hent detaljer om én oplevelse |
 
-Flysøgningen integrerer Duffel API og anvender rejsekriterier som destination, datoer og antal rejsende.
+Kategorierne er `mad`, `sevaerdigheder`, `shopping`, `natur`, `natteliv` og `familie`. Filteret understøtter kommaseparerede eller gentagne `categories`-parametre, f.eks. `GET /api/destinations/OSL/experiences?categories=natur,mad`. Flere kategorier kombineres med **ELLER**. Filtreringen ændrer ikke gemte rejser.
 
-### Hotels
+### Flysøgning og flyvalg (6 endpoints)
 
-Hotelmodulet håndterer søgning efter hoteltilbud samt valg og lagring af hoteloplysninger på en rejse.
+| Metode | Endpoint | Formål |
+|---|---|---|
+| POST | `/api/flights/search` | Søg flytilbud til rejsekladden gennem Duffel |
+| POST | `/api/trip-draft/flight` | Vælg et flytilbud fra seneste søgning med `offerId` |
+| DELETE | `/api/trip-draft/flight` | Fjern valgt fly fra rejsekladden |
+| POST | `/api/trips/{id}/flights/search` | Søg flytilbud til en gemt rejse |
+| PUT | `/api/trips/{id}/flight` | Vælg eller udskift fly på gemt rejse med `offerId` |
+| DELETE | `/api/trips/{id}/flight` | Fjern fly fra gemt rejse |
 
-Hoteltilbuddene anvender fiktive testdata, som gør det muligt at demonstrere funktionaliteten uden en ekstern hotelbookingstjeneste.
+`POST /api/trip-draft/flight` **søger ikke** efter fly; det vælger et allerede fundet tilbud. Fjernelse af fly fra kladden bevarer destination, datoer og søgeresultater. Flytilbud er til planlægning, ikke faktiske bookinger.
 
-### Destinations and Experiences
+### Hoteller og prisoversigt (7 endpoints)
 
-Destinationsmodulet understøtter søgning efter destinationer og hentning af inspirationsmateriale.
+| Metode | Endpoint | Formål |
+|---|---|---|
+| POST | `/api/hotels/search` | Søg fiktive hoteltilbud til rejsekladden |
+| POST | `/api/trip-draft/hotel` | Vælg eller udskift hotel med `hotelId` |
+| DELETE | `/api/trip-draft/hotel` | Fjern hotel fra rejsekladden |
+| GET | `/api/trip-draft/summary` | Hent prisoversigt for rejsekladden |
+| POST | `/api/trips/{id}/hotels/search` | Søg hoteltilbud til en gemt rejse |
+| PUT | `/api/trips/{id}/hotel` | Vælg eller udskift hotel på gemt rejse med `hotelId` |
+| DELETE | `/api/trips/{id}/hotel` | Fjern hotel fra gemt rejse |
 
-Oplevelser kan filtreres efter kategorier, og relevante aktiviteter kan tilføjes til en rejseplan.
+Hoteltilbud og hotelpriser er **fiktive testdata**, angivet i DKK. Rejsekladden skal have destination og gyldige datoer, før der kan søges. Hotelvalg i kladden ryddes ved ændring af destination eller rejseoplysninger samt efter gemning af rejsen. EUR-beløb omregnes med en **fast testkurs på 7,50 DKK pr. EUR**; det er ikke en aktuel valutakurs. En samlet pris kan være `null`, hvis en valuta ikke understøttes. Der foretages ingen reservation.
 
-Et eksempel på et endpoint til kategorifiltrering er:
+### Gemte rejser (3 endpoints)
 
-```http
-GET /api/destinations/OSL/experiences?categories=sevaerdigheder
+| Metode | Endpoint | Formål |
+|---|---|---|
+| POST | `/api/trips` | Gem rejse fra den aktuelle rejsekladde (`201 Created`) |
+| GET | `/api/trips` | Hent brugerens gemte rejser |
+| GET | `/api/trips/{id}` | Hent én gemt rejse |
+
+Rejser er knyttet til den autentificerede bruger. Et ugyldigt rejse-ID kan give `400 Bad Request`; en rejse, der ikke findes eller ikke tilhører brugeren, kan give `404 Not Found`. Et rejseobjekt kan indeholde `id`, `createdAt`, `destination`, `search`, `flight`, `hotel` og `priceSummary`.
+
+### Aktiviteter (5 endpoints)
+
+| Metode | Endpoint | Formål |
+|---|---|---|
+| POST | `/api/trips/{id}/activities` | Tilføj anbefalet oplevelse (`201 Created`) |
+| POST | `/api/trips/{id}/activities/custom` | Opret egen aktivitet (`201 Created`) |
+| GET | `/api/trips/{id}/activities` | Hent rejsens aktiviteter |
+| PUT | `/api/trips/{id}/activities/{activityId}` | Rediger aktivitet |
+| DELETE | `/api/trips/{id}/activities/{activityId}` | Slet aktivitet |
+
+En anbefalet oplevelse oprettes med `experienceId`, `date` og `time`. En egen aktivitet kan angives med `name`, `date`, `time`, `priceAmount`, `category` og `notes`. Disse endpoints kræver autentificering og kontrollerer adgang til rejsen.
+
+### Rejseplan og budget (3 endpoints)
+
+| Metode | Endpoint | Formål |
+|---|---|---|
+| GET | `/api/trips/{id}/itinerary` | Hent rejseplan med dage, fly, hotel, aktiviteter og budget |
+| PUT | `/api/trips/{id}/budget` | Opret eller opdater budgetgrænse |
+| DELETE | `/api/trips/{id}/budget` | Fjern budgetgrænse |
+
+Eksempel på `PUT /api/trips/{id}/budget`:
+
+```json
+{"budgetAmount": 10000.00}
 ```
 
-### Weather
+Budgetgrænsen skal være positiv, må højst være `9999999999.99` og må have maksimalt to decimaler. Budgettet viser kendte udgifter, eventuelle ukendte priser og resterende beløb, når det kan beregnes. Ikke-valgte fly og hoteller tæller som 0 DKK. Fly vises på afrejsedagen; aktivitetstider er lokale tider på destinationen.
 
-Vejrmodulet integrerer Open-Meteo og gør det muligt at hente vejroplysninger for destinationer.
+### Vejr og anbefalinger (7 endpoints)
 
-Et eksempel på et endpoint til vejrafhængige anbefalinger er:
+| Metode | Endpoint | Formål |
+|---|---|---|
+| GET | `/api/weather/airports` | Hent vejr for understøttede lufthavne |
+| GET | `/api/weather/airports/{code}` | Hent vejr for én lufthavn |
+| GET | `/api/weather/destinations/{code}` | Hent destinationsvejr og kommende dage |
+| GET | `/api/weather/destinations/{code}/climate` | Hent historiske månedsgennemsnit |
+| GET | `/api/weather/destinations/{code}/recommendations` | Hent vejrafhængige anbefalinger |
+| GET | `/api/trip-draft/weather` | Hent vejr og anbefalinger til rejsekladden |
+| GET | `/api/trips/{id}/weather` | Hent vejr og anbefalinger til gemt rejse |
 
-```http
-GET /api/weather/destinations/OSL/recommendations
-```
+Anbefalinger understøtter den valgfrie query-parameter `date=YYYY-MM-DD`. For rejsekladde og gemt rejse skal datoen ligge inden for rejsens periode; hvis den udelades, anvendes afrejsedatoen. Disse to rejserelaterede endpoints kræver autentificering. Historiske månedsgennemsnit er **ikke** en vejrprognose.
 
 ### HTTP-statuskoder
 
-API'et anvender HTTP-statuskoder til at vise resultatet af en forespørgsel.
-
 | Statuskode | Betydning |
 |---|---|
-| 200 OK | Forespørgslen blev gennemført |
-| 201 Created | En ressource blev oprettet |
-| 400 Bad Request | Ugyldigt input |
-| 401 Unauthorized | Manglende eller ugyldig autentificering |
-| 404 Not Found | Ressourcen blev ikke fundet |
-| 409 Conflict | Konflikt med eksisterende data |
-| 502 Bad Gateway | Problem ved kommunikation med en ekstern tjeneste |
+| `200 OK` | Forespørgslen blev gennemført |
+| `201 Created` | En ressource blev oprettet |
+| `400 Bad Request` | Ugyldigt input, datoformat eller ID |
+| `401 Unauthorized` | Manglende eller ugyldig autentificering |
+| `404 Not Found` | Ressource eller adgangsberettiget rejse blev ikke fundet |
+| `409 Conflict` | Konflikt med eksisterende data, f.eks. registreret e-mail |
+| `502 Bad Gateway` | Problem med ekstern tjeneste eller ugyldige eksterne data |
+
+De konkrete fejlbeskeder og statuskoder afhænger af endpointet og den underliggende service. Endpointlisten er gennemgået mod controllerkoden; den erstatter ikke en separat test af alle endpoints på den deployede server.
 
 ## 9. User Stories
 
