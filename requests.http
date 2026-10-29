@@ -1,16 +1,15 @@
 @baseUrl = http://157.230.115.167
-@tripId = 5
+@tripId = 2
 
 ### ============================================================
 ### EKSTRA TESTS - SERVER, LOGIN OG VALIDERING
 ### ============================================================
 
-### 1. Kontrollér at serveren kører
+### 1. Kontrollrer at serveren kører
 GET {{baseUrl}}/
 
-
 ### 2. Login
-### Kontrollér Melissa-bruger
+### Kontrollrer Melissa-bruger
 ### Sikkerhedstest - Login som Melissa
 POST {{baseUrl}}/api/auth/login
 Content-Type: application/json
@@ -29,7 +28,7 @@ Content-Type: application/json
 
 ### 3. Se den bruger, der er logget ind
 GET {{baseUrl}}/api/auth/me
-Authorization: Bearer {{token}}
+Authorization: Bearer {{us1token}}
 
 
 ### 4. Søg efter destinationer i Norge
@@ -38,17 +37,17 @@ GET {{baseUrl}}/api/destinations?search=Norge
 
 ### 5. Se mine gemte rejser
 GET {{baseUrl}}/api/trips
-Authorization: Bearer {{token}}
+Authorization: Bearer {{us1token}}
 
 
 ### 6. Se rejseplan og budget
 GET {{baseUrl}}/api/trips/{{tripId}}/itinerary
-Authorization: Bearer {{token}}
+Authorization: Bearer {{us1token}}
 
 
 ### 7. Se rejsens aktiviteter
 GET {{baseUrl}}/api/trips/{{tripId}}/activities
-Authorization: Bearer {{token}}
+Authorization: Bearer {{us1token}}
 
 
 ### 8. Se vejret i Oslo
@@ -61,7 +60,7 @@ GET {{baseUrl}}/api/auth/me
 
 ### 10. Ugyldigt rejse-ID
 GET {{baseUrl}}/api/trips/abc
-Authorization: Bearer {{token}}
+Authorization: Bearer {{us1token}}
 
 
 ### 11. Forkert datatype ved login
@@ -78,7 +77,7 @@ Content-Type: application/json
 
 ### 12. Forkert datatype for pris
 POST {{baseUrl}}/api/trips/{{tripId}}/activities/custom
-Authorization: Bearer {{token}}
+Authorization: Bearer {{us1token}}
 Content-Type: application/json
 
 {
@@ -93,7 +92,7 @@ Content-Type: application/json
 
 ### 13. Null som request
 POST {{baseUrl}}/api/trip-draft
-Authorization: Bearer {{token}}
+Authorization: Bearer {{us1token}}
 Content-Type: application/json
 
 null
@@ -101,7 +100,7 @@ null
 
 ### 14. Gyldig destination - forvent 201
 POST {{baseUrl}}/api/trip-draft
-Authorization: Bearer {{token}}
+Authorization: Bearer {{us1token}}
 Content-Type: application/json
 
 {
@@ -111,7 +110,7 @@ Content-Type: application/json
 
 ### 15. Decimal i antal voksne - forvent 400
 PUT {{baseUrl}}/api/trip-draft/details
-Authorization: Bearer {{token}}
+Authorization: Bearer {{us1token}}
 Content-Type: application/json
 
 {
@@ -125,7 +124,7 @@ Content-Type: application/json
 
 ### 16. Gyldige rejseoplysninger - forvent 200
 PUT {{baseUrl}}/api/trip-draft/details
-Authorization: Bearer {{token}}
+Authorization: Bearer {{us1token}}
 Content-Type: application/json
 
 {
@@ -138,26 +137,25 @@ Content-Type: application/json
 
 
 ### 17. Søg efter flybilletter med Duffel
-POST {{baseUrl}}/api/flights/search
-Authorization: Bearer {{token}}
+POST {{baseUrl}}/api/trips/{{tripId}}/flights/search
+Authorization: Bearer {{us1token}}
 
 
 ### ============================================================
 ### US1 - OPRET KONTO OG LOGIN
 ### ============================================================
 
-### US1.1 - Registrer ny bruger - forvent 201
+### US1.1 - Registrer ny bruger
 POST {{baseUrl}}/api/auth/register
 Content-Type: application/json
 
 {
   "name": "Test Bruger",
-  "email": "us1ny20261029d@example.com",
+  "email": "us1ny20261029test4@example.com",
   "password": "Test12345!"
 }
 
-
-### US1.2 - Registrer samme email igen - forvent 409
+### US1.2 - Registrer samme email igen
 POST {{baseUrl}}/api/auth/register
 Content-Type: application/json
 
@@ -168,7 +166,7 @@ Content-Type: application/json
 }
 
 
-### US1.3 - For kort adgangskode - forvent 400
+### US1.3 - For kort adgangskode
 POST {{baseUrl}}/api/auth/register
 Content-Type: application/json
 
@@ -179,7 +177,7 @@ Content-Type: application/json
 }
 
 
-### US1.4 - Login - forvent 200
+### US1.4 - Login
 POST {{baseUrl}}/api/auth/login
 Content-Type: application/json
 
@@ -195,12 +193,12 @@ Content-Type: application/json
     }
 %}
 
-### US1.5 - Hent bruger med JWT - forvent 200
+### US1.5 - Hent bruger med JWT
 GET {{baseUrl}}/api/auth/me
 Authorization: Bearer {{us1token}}
 
 
-### US1.6 - Hent bruger uden JWT - forvent 401
+### US1.6 - Hent bruger uden JWT
 GET {{baseUrl}}/api/auth/me
 
 
@@ -214,7 +212,7 @@ Content-Type: application/json
 }
 
 
-### US1.8 - Logout - forvent 200
+### US1.8 - Logout
 POST {{baseUrl}}/api/auth/logout
 Authorization: Bearer {{us1token}}
 
@@ -223,23 +221,23 @@ Authorization: Bearer {{us1token}}
 ### US2 - SØG EFTER DESTINATION
 ### ============================================================
 
-### US2.1 - Søg efter Oslo - forvent 200
+### US2.1 - Søg efter Oslo
 GET {{baseUrl}}/api/destinations?search=Oslo
 
 
-### US2.2 - Søg efter Norge - forvent 200
+### US2.2 - Søg efter Norge
 GET {{baseUrl}}/api/destinations?search=Norge
 
 
-### US2.3 - Søg efter København - forvent 200
+### US2.3 - Søg efter København
 GET {{baseUrl}}/api/destinations?search=K%C3%B8benhavn
 
 
-### US2.4 - Ukendt destination - forvent 200 og []
+### US2.4 - Ukendt destination
 GET {{baseUrl}}/api/destinations?search=Tokyo
 
 
-### US2.5 - Vælg destination - forvent 201
+### US2.5 - vælg destination
 POST {{baseUrl}}/api/trip-draft
 Authorization: Bearer {{us1token}}
 Content-Type: application/json
@@ -249,7 +247,7 @@ Content-Type: application/json
 }
 
 
-### US2.6 - Ugyldig destination - forvent 400
+### US2.6 - Ugyldig destination
 POST {{baseUrl}}/api/trip-draft
 Authorization: Bearer {{us1token}}
 Content-Type: application/json
@@ -259,7 +257,7 @@ Content-Type: application/json
 }
 
 
-### US2.7 - Vælg destination uden JWT - forvent 401
+### US2.7 - Vælg destination uden JWT
 POST {{baseUrl}}/api/trip-draft
 Content-Type: application/json
 
@@ -282,7 +280,7 @@ GET {{baseUrl}}/api/destinations/CPH
 Accept: application/json
 
 
-### US3.3 - Ukendt destination - forvent 404
+### US3.3 - Ukendt destination
 GET {{baseUrl}}/api/destinations/XYZ
 Accept: application/json
 
@@ -298,10 +296,10 @@ Accept: application/json
 
 
 ### ============================================================
-### US4 - OPRET REJSE OG VÆLG DATOER
+### US4 - OPRET REJSE OG Vælg DATOER
 ### ============================================================
 
-### US4.1 - Start rejsekladde - forvent 201
+### US4.1 - Start rejsekladde
 POST {{baseUrl}}/api/trip-draft
 Authorization: Bearer {{us1token}}
 Content-Type: application/json
@@ -311,7 +309,7 @@ Content-Type: application/json
 }
 
 
-### US4.2 - Tilføj rejseoplysninger - forvent 200
+### US4.2 - Tilføj rejseoplysninger
 PUT {{baseUrl}}/api/trip-draft/details
 Authorization: Bearer {{us1token}}
 Content-Type: application/json
@@ -325,7 +323,7 @@ Content-Type: application/json
 }
 
 
-### US4.3 - Afrejsedato i fortiden - forvent 400
+### US4.3 - Afrejsedato i fortiden
 PUT {{baseUrl}}/api/trip-draft/details
 Authorization: Bearer {{us1token}}
 Content-Type: application/json
@@ -339,7 +337,7 @@ Content-Type: application/json
 }
 
 
-### US4.4 - Hjemrejsedato før afrejsedato - forvent 400
+### US4.4 - Hjemrejsedato før afrejsedato
 PUT {{baseUrl}}/api/trip-draft/details
 Authorization: Bearer {{us1token}}
 Content-Type: application/json
@@ -353,7 +351,7 @@ Content-Type: application/json
 }
 
 
-### US4.5 - Samme afrejse- og hjemrejsedato - forvent 400
+### US4.5 - Samme afrejse- og hjemrejsedato
 PUT {{baseUrl}}/api/trip-draft/details
 Authorization: Bearer {{us1token}}
 Content-Type: application/json
@@ -367,7 +365,7 @@ Content-Type: application/json
 }
 
 
-### US4.6 - Samme afrejse og destination - forvent 400
+### US4.6 - Samme afrejse og destination
 PUT {{baseUrl}}/api/trip-draft/details
 Authorization: Bearer {{us1token}}
 Content-Type: application/json
@@ -381,7 +379,7 @@ Content-Type: application/json
 }
 
 
-### US4.7 - Ugyldigt antal voksne - forvent 400
+### US4.7 - Ugyldigt antal voksne
 PUT {{baseUrl}}/api/trip-draft/details
 Authorization: Bearer {{us1token}}
 Content-Type: application/json
@@ -395,7 +393,7 @@ Content-Type: application/json
 }
 
 
-### US4.8 - For mange voksne - forvent 400
+### US4.8 - For mange voksne
 PUT {{baseUrl}}/api/trip-draft/details
 Authorization: Bearer {{us1token}}
 Content-Type: application/json
@@ -409,7 +407,7 @@ Content-Type: application/json
 }
 
 
-### US4.9 - Decimal i antal voksne - forvent 400
+### US4.9 - Decimal i antal voksne 0
 PUT {{baseUrl}}/api/trip-draft/details
 Authorization: Bearer {{us1token}}
 Content-Type: application/json
@@ -423,7 +421,7 @@ Content-Type: application/json
 }
 
 
-### US4.10 - Forkert datatype for direkte fly - forvent 400
+### US4.10 - Forkert datatype for direkte fly
 PUT {{baseUrl}}/api/trip-draft/details
 Authorization: Bearer {{us1token}}
 Content-Type: application/json
@@ -437,7 +435,7 @@ Content-Type: application/json
 }
 
 
-### US4.11 - Ugyldigt datoformat - forvent 400
+### US4.11 - Ugyldigt datoformat -
 PUT {{baseUrl}}/api/trip-draft/details
 Authorization: Bearer {{us1token}}
 Content-Type: application/json
@@ -451,7 +449,7 @@ Content-Type: application/json
 }
 
 
-### US4.12 - Manglende afrejsedato - forvent 400
+### US4.12 - Manglende afrejsedato
 PUT {{baseUrl}}/api/trip-draft/details
 Authorization: Bearer {{us1token}}
 Content-Type: application/json
@@ -464,7 +462,7 @@ Content-Type: application/json
 }
 
 
-### US4.13 - Kontrollér gemt rejsekladde - forvent 200
+### US4.13 - Kontroll√©r gemt rejsekladde
 GET {{baseUrl}}/api/trip-draft
 Authorization: Bearer {{us1token}}
 Accept: application/json
@@ -474,19 +472,11 @@ Accept: application/json
 ### US5 - SØG EFTER FLY
 ### ============================================================
 
-### US5.1 - Søg efter flybilletter
-# Forventet: 200 ved vellykket søgning.
-# Kontrollér offers, flyselskab, pris og datoer.
-POST {{baseUrl}}/api/flights/search
+### US5.1 - Søgefter flybilletter
+# Kontroller offers, flyselskab, pris og datoer.
+POST {{baseUrl}}/api/trips/{{tripId}}/flights/search
 Authorization: Bearer {{us1token}}
 Accept: application/json
-
-> {%
-    if (response.status === 200 && response.body.offers &&
-        response.body.offers.length > 0) {
-        client.global.set("flightOfferId", response.body.offers[0].id);
-    }
-%}
 
 
 ### ============================================================
@@ -513,7 +503,6 @@ Accept: application/json
 
 
 ### US7.2 - Kontrollér gemt fly
-# Forventet: 200 OK, og flight er ikke null.
 GET {{baseUrl}}/api/trips/2
 Authorization: Bearer {{us1token}}
 Accept: application/json
@@ -522,67 +511,50 @@ Accept: application/json
 ### US8 - SØG EFTER HOTELLER
 ### ============================================================
 
-### US8.1 - Søg efter hoteller - forvent 200
-# Fra HotelController: POST /api/hotels/search.
-# Forvent offers, currency=DKK og testData=true.
-POST {{baseUrl}}/api/hotels/search
+### US8.1 - Søg efter hoteller til Oslo
+POST {{baseUrl}}/api/trips/2/hotels/search
 Authorization: Bearer {{us1token}}
 Accept: application/json
 
-> {%
-    if (response.status === 200 &&
-        response.body.offers &&
-        response.body.offers.length > 0) {
-        client.global.set("hotelId", response.body.offers[0].id);
-    }
-%}
 
-
-### US8.2 - Hotelsøgning uden JWT - forvent 401
-POST {{baseUrl}}/api/hotels/search
+### US8.2 - Hotelsøgning uden JWT
+POST {{baseUrl}}/api/trips/2/hotels/search
 Accept: application/json
-
 
 ### ============================================================
 ### US9 - SAMMENLIGN OG VÆLG HOTEL
 ### ============================================================
 
-### US9.1 - Gem valgt hotel - forvent 200
-# Kræver at US8.1 er kørt først.
-POST {{baseUrl}}/api/trip-draft/hotel
+
+### US9.1 - Vælg og gem hotel
+PUT {{baseUrl}}/api/trips/2/hotel
 Authorization: Bearer {{us1token}}
 Content-Type: application/json
 
 {
-  "hotelId": "{{hotelId}}"
+  "hotelId": "OSL-city"
 }
 
-
-### US9.2 - Se samlet pris med valgt hotel - forvent 200
-GET {{baseUrl}}/api/trip-draft/summary
+### US9.2 - Kontrollér gemt hotel
+GET {{baseUrl}}/api/trips/2
 Authorization: Bearer {{us1token}}
 Accept: application/json
 
-
-### US9.3 - Fjern valgt hotel - forvent 200
-DELETE {{baseUrl}}/api/trip-draft/hotel
+### US9.3 - Fjern valgt hotel
+DELETE {{baseUrl}}/api/trips/2/hotel
 Authorization: Bearer {{us1token}}
 Accept: application/json
 
+### US9.4 - Kontrollér at hotel er fjernet
 
-### US9.4 - Kontrollér at hotel er fjernet - forvent 200
-# Hotel skal være null.
-GET {{baseUrl}}/api/trip-draft/summary
+GET {{baseUrl}}/api/trips/2
 Authorization: Bearer {{us1token}}
 Accept: application/json
-
 
 ### ============================================================
 ### US10 - SE ANBEFALEDE OPLEVELSER
 ### ============================================================
 
-### US10.1 - Hent anbefalinger for Oslo
-# Endpoint fra projektbeskrivelsen - ikke verificeret.
 ### US10.1 - Hent anbefalede oplevelser i Oslo
 GET {{baseUrl}}/api/weather/destinations/OSL/recommendations
 Accept: application/json
@@ -592,23 +564,22 @@ Accept: application/json
 ### US11 - FILTRER INSPIRATION
 ### ============================================================
 
-### US11.1 - Filtrer efter madoplevelser
-# Endpoint fra projektbeskrivelsen - ikke verificeret.
-### US11.1 - Filtrer oplevelser efter kategori
+
 ### US11.1 - Filtrer oplevelser efter kategori
 GET {{baseUrl}}/api/destinations/OSL/experiences?categories=sevaerdigheder
+Accept: application/json
+
+### US11.2 - Filtrer efter natur
+GET {{baseUrl}}/api/destinations/OSL/experiences?categories=natur
 Accept: application/json
 
 ### ============================================================
 ### US12 - GEM INSPIRATION I REJSEPLANEN
 ### ============================================================
 
-### US12.1 - Gem anbefalet oplevelse
-# Kandidat-endpoint. JSON-format skal bekræftes.
-### US12.1 - Tilføj en anbefalet oplevelse til rejsen
-### US12 - Tilføj oplevelse til Oslo-rejsen
-### US12.1 - Tilføj anbefalet oplevelse
-POST {{baseUrl}}/api/trips/6/activities
+
+### US12.1 - Tilføj oplevelse til rejse
+POST {{baseUrl}}/api/trips/2/activities
 Authorization: Bearer {{us1token}}
 Content-Type: application/json
 
@@ -617,8 +588,6 @@ Content-Type: application/json
   "date": "2026-11-21",
   "time": "12:00"
 }
-
-
 ### ============================================================
 ### US13 - OPRET OG ADMINISTRER EGNE AKTIVITETER
 ### ============================================================
@@ -626,7 +595,7 @@ Content-Type: application/json
 ### US13.1 - Opret egen aktivitet
 # Endpoint fra dine eksisterende tests.
 ### US13.1 - Opret selvvalgt aktivitet
-POST {{baseUrl}}/api/trips/6/activities/custom
+POST {{baseUrl}}/api/trips/2/activities/custom
 Authorization: Bearer {{us1token}}
 Content-Type: application/json
 
@@ -639,9 +608,8 @@ Content-Type: application/json
   "notes": "Restaurant i centrum"
 }
 
-
 ### US13.2 - Hent rejsens aktiviteter
-GET {{baseUrl}}/api/trips/6/activities
+GET {{baseUrl}}/api/trips/2/activities
 Authorization: Bearer {{us1token}}
 Accept: application/json
 
@@ -650,16 +618,14 @@ Accept: application/json
 ### ============================================================
 
 ### US14.1 - Hent samlet rejseplan
-GET {{baseUrl}}/api/trips/6/itinerary
+GET {{baseUrl}}/api/trips/2/itinerary
 Authorization: Bearer {{us1token}}
 Accept: application/json
-
 
 ### US14.2 - Hent rejsens budget
-GET {{baseUrl}}/api/trips/6
+GET {{baseUrl}}/api/trips/2
 Authorization: Bearer {{us1token}}
 Accept: application/json
-
 
 ### ============================================================
 ### US15 - SE VEJR OG RELEVANTE FORSLAG
@@ -668,7 +634,6 @@ Accept: application/json
 ### US15.1 - Hent vejret for Oslo
 GET {{baseUrl}}/api/weather/destinations/OSL
 Accept: application/json
-
 
 ### ============================================================
 ### DATABASE OG ADGANGSKONTROL
@@ -681,12 +646,11 @@ Accept: application/json
 
 
 ### DB.2 - Hent én bestemt rejse
-GET {{baseUrl}}/api/trips/{{tripId}}
+GET {{baseUrl}}/api/trips/2
 Authorization: Bearer {{us1token}}
 Accept: application/json
 
-
-### DB.3 - Hent rejser uden JWT - forvent 401
+### DB.3 - Hent rejser uden JWT
 GET {{baseUrl}}/api/trips
 Accept: application/json
 
@@ -715,4 +679,9 @@ Accept: application/json
 ### API-test - Duffel flysøgning
 POST {{baseUrl}}/api/trips/2/flights/search
 Authorization: Bearer {{us1token}}
+Accept: application/json
+
+### Find Melissas rejser
+GET {{baseUrl}}/api/trips
+Authorization: Bearer {{melissaToken}}
 Accept: application/json

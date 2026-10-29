@@ -1,193 +1,527 @@
-Travel Planner
-Vision
-Travel Planner er en backendbaseret rejseplanlægningsapplikation, der er udviklet som et individuelt semesterprojekt på 3. semester af datamatikeruddannelsen. Formålet er at samle destinationssøgning, fly, hoteller og rejseplanlægning i et system, hvor brugeren kan gemme sine rejseoplysninger.
-Projektet fokuserer på distribuerede systemer: en klient kommunikerer med et Java-baseret REST API, som arbejder med en PostgreSQL-database og integrerer eksterne tjenester. Projektet foretager ikke faktiske fly- eller hotelbookinger.
+# Travel Planner
 
-Links
-GitHub – Travel Planner (backendprojekt): https://github.com/Melissabekirova04/Portifolio
+**Semesterprojekt – 3. semester, Datamatikeruddannelsen**
 
-Portfolio-hjemmeside: https://melissabekirova04.github.io/Portifolio/
+## 1. Introduktion
 
-Deployed-hjemmeside:
+At planlægge en rejse handler om meget mere end blot at vælge en destination. Flybilletter skal sammenlignes, hoteller skal findes, budgettet skal overholdes, og der skal være plads til spændende oplevelser undervejs.
 
-Architecture:
-System Overview
-Travel Planner er udviklet i Java med Javalin 6.7.0 som HTTP-server og REST-framework. Koden er opdelt efter ansvar:
-•	Controller: Modtager HTTP-requests, læser og validerer input samt returnerer JSON og relevante HTTP-statuskoder.
-•	Service: Indeholder forretningslogik og integrationer til eksterne API'er, blandt andet fly- og vejrtjenester.
-•	DAO (Data Access Object): Håndterer lagring og hentning af data.
-•	Entity: Repræsenterer datamodellen og dens relationer via Hibernate/JPA.
-•	Security: Håndterer registrering, login og beskyttelse af relevante endpoints.
-Anvendte teknologier: Java, Javalin, Maven, Hibernate/JPA, PostgreSQL, Jackson, Password4j, Duffel API, Open-Meteo, JUnit, Docker, Ubuntu og DigitalOcean.
+Det var udgangspunktet for udviklingen af **Travel Planner**.
 
-Distribueret kommunikation:
-Klient og backend udveksler data over HTTP, typisk i JSON-format. Backenden kommunikerer med PostgreSQL for vedvarende lagring og med eksterne API'er for data, som ikke vedligeholdes lokalt. Disse systemer er udviklet på forskellige platforme og kommunikerer gennem definerede grænseflader.
-Systemet kan modtage forespørgsler fra flere brugere. Brugeridentitet og ejerskab til rejser er derfor vigtige hensyn, så data ikke blandes mellem brugere. Det er ikke det samme som at dokumentere belastningstest eller garantere en bestemt kapacitet; det ville kræve særskilte målinger.
+Travel Planner er en backendbaseret rejseplanlægningsapplikation, som jeg har udviklet som mit individuelle semesterprojekt på 3. semester af datamatikeruddannelsen.
 
-Architecture Diagram:
+Formålet med projektet er at samle de vigtigste dele af rejseplanlægningen i ét system. Brugeren kan søge efter destinationer, undersøge flymuligheder, finde hoteller, udforske seværdigheder og oprette sin egen rejseplan med overblik over de forventede udgifter.
+
+Projektet er udviklet i Java med Javalin som REST-framework og PostgreSQL som database. Derudover integrerer systemet eksterne API'er til flysøgning, vejroplysninger og destinationsinformation.
+
+En central del af udviklingen har været at få forskellige teknologier til at kommunikere med hinanden. Jeg har derfor arbejdet med REST API'er, databasearkitektur, brugerautentificering, validering, fejlhåndtering, automatiserede tests og deployment.
+
+Travel Planner er udviklet som et backendprojekt og foretager ikke faktiske fly- eller hotelbookinger.
+
+## 2. Links
+
+- **Portfolio-hjemmeside:** https://melissabekirova04.github.io/Portifolio/
+- **GitHub – Portfolio:** https://github.com/Melissabekirova04/Portifolio
+- **Deployet backend på DigitalOcean:** http://157.230.115.167
+
+Backendens adresse giver adgang til API'et. Projektet har endnu ikke en selvstændig grafisk brugerflade.
+
+## 3. Projektets funktioner
+
+Travel Planner understøtter flere funktioner, som tilsammen danner grundlaget for en personlig rejseplan.
+
+### Brugerregistrering og login
+Brugeren kan oprette en konto, logge ind og få adgang til sine egne gemte rejser. Adgangskoder gemmes som hashes, og beskyttede endpoints anvender autentificering og adgangskontrol.
+
+### Destinationssøgning
+Brugeren kan søge efter destinationer ved hjælp af by- eller landenavne og vælge en destination til sin rejse.
+
+### Destinationsinformation og inspiration
+Systemet præsenterer information om destinationer, herunder beskrivelser, billeder og inspiration til oplevelser.
+
+### Oprettelse af rejser
+Brugeren kan oprette en rejse med destination, afrejsedato, hjemrejsedato og antal rejsende. Systemet validerer oplysningerne for at forhindre ugyldige rejseplaner.
+
+### Flysøgning
+Flytilbud hentes gennem Duffel API. Brugeren kan søge efter fly ud fra destination, datoer og antal rejsende samt angive, om der ønskes direkte fly.
+
+### Hoteller
+Brugeren kan undersøge hotelmuligheder og tilføje et valgt hotel til rejseplanen. Hoteltilbuddene er baseret på testdata og bruges til at demonstrere søgning, valg og prisberegning.
+
+### Oplevelser og aktiviteter
+Travel Planner giver inspiration til seværdigheder og aktiviteter. Brugeren kan filtrere anbefalinger efter interesser og tilføje aktiviteter til sin rejse.
+
+### Rejseplan og budget
+Systemet samler rejseoplysninger, valgte fly, hotel og aktiviteter i en rejseplan. Derudover beregnes et budget ud fra de registrerede udgifter.
+
+### Vejroplysninger
+Brugeren kan hente vejroplysninger for destinationer gennem Open-Meteo og få inspiration til aktiviteter ud fra vejret.
+
+## 4. Anvendte teknologier
+
+| Teknologi | Anvendelse |
+|---|---|
+| Java | Programmeringssprog til backend |
+| Javalin 6.7.0 | REST API og HTTP-server |
+| Maven | Projektstruktur og dependency management |
+| Hibernate/JPA | Object-relational mapping |
+| PostgreSQL | Relationel database |
+| Jackson | Håndtering af JSON |
+| Password4j | Hashing og verificering af adgangskoder |
+| JWT | Tokenbaseret autentificering |
+| Duffel API | Flysøgning |
+| Open-Meteo API | Vejroplysninger |
+| Wikipedia/Wikimedia | Destinationsinformation og billeder |
+| JUnit | Automatiserede tests |
+| Docker | Containerisering |
+| GitHub Actions | Automatiserede workflows |
+| Ubuntu | Operativsystem på serveren |
+| DigitalOcean | Hosting og deployment |
+
+## 5. Systemarkitektur
+
+### System Overview
+
+Travel Planner er udviklet med en lagdelt arkitektur, hvor hver del af applikationen har sit eget ansvarsområde.
+
+**Controller**
+
+Controllerlaget modtager HTTP-requests, behandler input, kalder relevante services og returnerer JSON samt HTTP-statuskoder.
+
+**Service**
+
+Servicelaget indeholder applikationens forretningslogik og håndterer blandt andet kommunikation med eksterne API'er.
+
+**DAO (Data Access Object)**
+
+DAO-laget håndterer kommunikationen med PostgreSQL gennem Hibernate/JPA. Her udføres databaseoperationer som oprettelse, hentning og opdatering af data.
+
+**Entity**
+
+Entityklasserne repræsenterer databasens tabeller og relationer.
+
+**Security**
+
+Sikkerhedslaget håndterer autentificering og adgangskontrol, så brugere kun kan tilgå de ressourcer, de har tilladelse til.
+
+### Arkitekturdiagram
+
+```text
 Klient (curl / Postman / fremtidig frontend)
-|
-HTTP/JSON
-|
-Javalin REST API
-|
-Controllers
-/       \
-Services     Security
-|             |
-DAO / JPA     Login / session
-|
-PostgreSQL
+                    |
+                 HTTP/JSON
+                    |
+              Javalin REST API
+                    |
+                Controllers
+                    |
+           -------------------
+           |                 |
+        Services          Security
+           |                 |
+           DAO         Autentificering
+           |
+      Hibernate/JPA
+           |
+       PostgreSQL
 
-Services ----HTTP----> Duffel API / Open-Meteo
+Services
+   |
+   |--- Duffel API
+   |--- Open-Meteo API
+   |--- Wikipedia/Wikimedia
+```
 
-Key Design Decisions
+### Distribueret kommunikation
 
-Lagdelt arkitektur:
-Valg: Controller, Service, DAO og Entity har forskellige ansvarsområder.
-Begrundelse: Det adskiller HTTP-håndtering, forretningslogik og persistence, så koden bliver nemmere at forstå, fejlfinde og teste.
-Konsekvens: Flere klasser og mere struktur kræver ekstra arbejde, men gør det lettere at udskifte eller videreudvikle enkelte komponenter.
+Travel Planner består af flere komponenter, som kommunikerer gennem definerede grænseflader.
 
-JPA/Hibernate og PostgreSQL:
-Valg: En relationsdatabase med JPA-entities og DAO-lag.
-Begrundelse: Brugere, rejser, fly, hoteller, budgetter og aktiviteter har tydelige relationer, som passer til en relationel datamodel.
-Konsekvens: Datamodellen kan håndhæve relationer og understøtte vedvarende lagring. Til gengæld skal ændringer i entities og databaseskema holdes synkroniserede, og relationer kan give komplekse forespørgsler.
+Klienten sender HTTP-requests til backendens REST API, som behandler forespørgslerne og returnerer JSON.
 
-Sessionsbaseret autentificering:
-Valg: Login håndteres med session/cookie, og adgangskoder hashes med Password4j.
-Begrundelse: En session gør det muligt at identificere en bruger på tværs af API-kald uden at sende adgangskoden ved hver forespørgsel.
-Konsekvens: Beskyttede endpoints skal kontrollere brugerens session og ejerskab til data. Ved deployment skal cookieindstillinger, HTTPS og eventuel skalering på tværs af flere serverinstanser vurderes. Projektet beskrives ikke som JWT-baseret, da den implementerede løsning bruger sessioner.
+Backenden kommunikerer med PostgreSQL for at gemme og hente data samt med eksterne API'er for at indsamle oplysninger om fly, vejr og destinationer.
 
-Eksterne API'er:
-Valg: Flyoplysninger hentes via Duffel, og vejroplysninger via Open-Meteo.
-Begrundelse: Eksterne tjenester leverer data, som det ville være uhensigtsmæssigt at opbygge og vedligeholde selv.
-Konsekvens: Applikationen afhænger af netværksforbindelse, API-adgang, svartider og eksterne tjenesters datakvalitet. Fejl og manglende svar skal derfor håndteres tydeligt.
+Dette gør Travel Planner til et eksempel på et distribueret system, hvor flere selvstændige tjenester samarbejder om at levere applikationens funktionalitet.
 
-Fejlhåndtering og validering:
-Valg: API'et validerer relevante brugerinput og anvender HTTP-statuskoder til at beskrive udfaldet af requests.
-Begrundelse: Klienten skal kunne skelne mellem eksempelvis ugyldigt input, manglende adgang, ikke-fundne ressourcer og problemer med eksterne tjenester.
-Konsekvens: Der skal testes både succes- og fejlscenarier. Konkrete statuskoder afhænger af det enkelte endpoint og dets implementering.
+## 6. Vigtige designvalg
 
-Deployment med Docker:
-Valg: Backend og database er sat op på en DigitalOcean-server med Ubuntu og Docker.
-Begrundelse: Containere gør det nemmere at styre applikationens kørselsmiljø og adskille backend og database.
-Konsekvens: Deployment kræver håndtering af miljøvariabler, netværk, vedvarende databasevolumener, serveropdateringer og logning. En fungerende lokal applikation er ikke i sig selv garanti for korrekt drift på serveren.
+### Lagdelt arkitektur
 
-Data Model:
-ERD
-ER-diagram: docs/TravelPlanner-ERD.png (indsættes fra projektmappen)
-ER-diagrammet er lavet i pgAdmin og viser de vigtigste tabeller og deres relationer. Billedet skal ligge i docs/TravelPlanner-ERD.png i samme repository som denne README.
+**Valg:** Applikationen er opdelt i Controller, Service, DAO og Entity.
 
-Important Entities:
-Entity / tabel	Formål	Relation
-User / users	Registreret bruger med loginoplysninger	Én bruger kan have flere rejser
-Trip / trips	En gemt rejse med destination og øvrige rejseoplysninger	Tilhører én bruger
-TripFlight / trip_flights	Valgt flytilbud til en rejse	Knyttet til en rejse
-TripHotel / trip_hotels	Hoteloplysninger knyttet til rejsen	Knyttet til en rejse
-TripBudget / trip_budgets	Budgetoplysninger	Knyttet til en rejse
-Activity / activities	Aktiviteter på rejsen	Flere aktiviteter kan tilhøre én rejse
-trip_hotel_amenities	Faciliteter knyttet til et hotel	Flere faciliteter kan tilhøre ét hotel
+**Begrundelse:** Opdelingen adskiller HTTP-håndtering, forretningslogik og databaseadgang. Det gør koden mere overskuelig og lettere at vedligeholde og teste.
 
-Derudover findes app_migrations til registrering af databaseændringer. Tabellen er teknisk og er ikke en del af brugerens rejseplan.
-Designovervejelse: At opdele fly, hotel og budget i særskilte tabeller gør datamodellen mere overskuelig og understøtter relationer. Det medfører dog, at data nogle gange skal hentes gennem flere tabeller. Databasen indeholder også ældre rejsekolonner fra tidligere iterationer; en mulig videreudvikling er at rydde op i disse, når migrering og bagudkompatibilitet er afklaret.
+**Afvejning:** Arkitekturen kræver flere klasser og en tydelig struktur, men gør det nemmere at ændre eller udvide enkelte komponenter.
 
-API Documentation:
-REST API'et udveksler JSON. Nedenstående er de centrale endpoints, der tidligere er implementeret eller testet i projektet. Den endelige oversigt bør kontrolleres mod de aktuelle route-definitioner i koden inden aflevering.
-Authentication
-Metode	Endpoint	Formål
-POST	/api/auth/register	Opret bruger
-POST	/api/auth/login	Log ind og opret session
-POST	/api/auth/logout	Log ud
-GET	/api/auth/me	Hent oplysninger om aktuel session/bruger
+### Hibernate/JPA og PostgreSQL
 
-Registrering:
+**Valg:** PostgreSQL anvendes som relationsdatabase, mens Hibernate/JPA håndterer koblingen mellem Java-objekter og databasetabeller.
+
+**Begrundelse:** Brugere, rejser, fly, hoteller, budgetter og aktiviteter har relationer, som passer til en relationel datamodel.
+
+**Afvejning:** Relationerne gør det muligt at organisere data struktureret, men ændringer i datamodellen kan kræve tilpasninger i både entities, DAO'er og databasen.
+
+### Autentificering og adgangskontrol
+
+**Valg:** Travel Planner anvender autentificering til at beskytte brugeroplysninger og gemte rejser. Password4j anvendes til hashing og verificering af adgangskoder.
+
+**Begrundelse:** Brugerens adgangskode skal ikke gemmes i klartekst, og personlige rejseoplysninger skal kun kunne tilgås af den rette bruger.
+
+**Afvejning:** Sikkerhed kræver håndtering af tokens eller sessioner, validering af adgang og kontrol af ejerskab til data.
+
+### Eksterne API'er
+
+**Valg:** Travel Planner integrerer Duffel til flysøgning, Open-Meteo til vejrdata og Wikipedia/Wikimedia til destinationsinformation og billeder.
+
+**Begrundelse:** Eksterne API'er gør det muligt at hente flyoplysninger, vejrudsigter og destinationsinformation uden at skulle opbygge og vedligeholde alle data lokalt.
+
+**Afvejning:** Systemet afhænger af de eksterne tjenesters svartider, tilgængelighed og dataformater. Derfor er validering, fejlhåndtering og håndtering af manglende data vigtige dele af implementeringen.
+
+### Validering og fejlhåndtering
+
+**Valg:** API'et validerer brugerinput og returnerer relevante HTTP-statuskoder.
+
+**Begrundelse:** Ugyldige oplysninger skal opdages, før de behandles eller gemmes i databasen.
+
+**Afvejning:** Validering kræver ekstra kode og tests, men forbedrer systemets stabilitet og gør fejl lettere at identificere.
+
+### Deployment med Docker
+
+**Valg:** Backend og database er deployet på en DigitalOcean-server med Docker.
+
+**Begrundelse:** Docker gør det muligt at køre applikationen og databasen i separate containere med hver deres konfiguration.
+
+**Afvejning:** Deployment kræver håndtering af miljøvariabler, containere, netværk, databaseforbindelser og serverkonfiguration.
+
+## 7. Datamodel
+
+### ER-diagram (Entity-Relationship Diagram)
+
+Mit ER-diagram kan findes i mappen **`docs`** under filnavnet `TravelPlanner-ERD.png`.
+
+Diagrammet er udarbejdet i pgAdmin og viser databasens vigtigste tabeller samt relationerne mellem brugere, rejser, fly, hoteller, budgetter og aktiviteter.
+
+![Travel Planner ER-diagram](docs/TravelPlanner-ERD.png)
+
+### Centrale entiteter
+
+| Entitet/tabel | Formål | Relation |
+|---|---|---|
+| User / users | Gemmer registrerede brugere | Én bruger kan have flere rejser |
+| Trip / trips | Gemmer rejseoplysninger | Tilhører én bruger |
+| TripFlight / trip_flights | Gemmer valgte flyoplysninger | Knyttet til en rejse |
+| TripHotel / trip_hotels | Gemmer hoteloplysninger | Knyttet til en rejse |
+| TripBudget / trip_budgets | Gemmer budgetoplysninger | Knyttet til en rejse |
+| Activity / activities | Gemmer aktiviteter | Flere aktiviteter kan tilhøre én rejse |
+| trip_hotel_amenities | Gemmer hotelfaciliteter | Knyttet til hoteloplysninger |
+
+Databasen indeholder desuden tabellen `app_migrations`, som anvendes til registrering af databaseændringer.
+
+### Designovervejelser
+
+Datamodellen er blevet udvidet gennem projektets udvikling.
+
+I begyndelsen blev flere rejseoplysninger håndteret samlet. Senere blev datamodellen opdelt i separate tabeller for blandt andet fly, hoteller og budgetter.
+
+Denne opdeling gør det lettere at organisere data og arbejde med relationer, men kræver samtidig, at ændringer i databasen bliver håndteret korrekt i applikationens øvrige lag.
+
+## 8. API-dokumentation
+
+Travel Planner anvender et REST API, hvor data udveksles i JSON-format.
+
+API'et er opdelt efter funktionalitet og håndterer blandt andet brugerautentificering, rejser, fly, hoteller, aktiviteter og vejroplysninger.
+
+### Authentication
+
+| Metode | Endpoint | Formål |
+|---|---|---|
+| POST | `/api/auth/register` | Opret en bruger |
+| POST | `/api/auth/login` | Log ind |
+| POST | `/api/auth/logout` | Log ud |
+| GET | `/api/auth/me` | Hent oplysninger om den aktuelle bruger |
+
+**Eksempel på registrering**
+
+```http
 POST /api/auth/register
 Content-Type: application/json
-Et gyldigt registreringsrequest indeholder de brugeroplysninger, som controlleren kræver, herunder e-mail og adgangskode. Ved vellykket oprettelse returnerer API'et 201 Created.
+```
 
-Login og session:
-POST /api/auth/login
-Content-Type: application/json
-Ved vellykket login anvendes en sessionscookie til efterfølgende requests. Det præcise JSON-format for request og response skal aflæses i den aktuelle controller, så dokumentationen matcher koden.
+Ved vellykket registrering returnerer API'et statuskoden `201 Created`.
 
-Trips:
-Metode	Endpoint	Formål
-POST	/api/trips	Opret og gem en rejse
-GET	/api/trips	Hent brugerens rejser
-GET	/api/trips/{id}	Hent en bestemt rejse
+### Trips
 
-Eksempel på rejseoplysninger:
-En gemt rejse kan blandt andet indeholde følgende destination og søgekriterier:
+| Metode | Endpoint | Formål |
+|---|---|---|
+| POST | `/api/trips` | Opret og gem en rejse |
+| GET | `/api/trips` | Hent brugerens gemte rejser |
+| GET | `/api/trips/{id}` | Hent en bestemt rejse |
+
+**Eksempel på rejseoplysninger**
+
+```json
 {
-"destination": {
-"city": "Oslo",
-"country": "Norway",
-"airportCode": "OSL"
-},
-"search": {
-"origin": "CPH",
-"destination": "OSL",
-"departureDate": "2026-11-20",
-"returnDate": "2026-11-25",
-"adults": 1,
-"directOnly": false
+  "destination": {
+    "city": "Oslo",
+    "country": "Norway",
+    "airportCode": "OSL"
+  },
+  "search": {
+    "origin": "CPH",
+    "destination": "OSL",
+    "departureDate": "2026-11-20",
+    "returnDate": "2026-11-25",
+    "adults": 1,
+    "directOnly": false
+  }
 }
-}
-Eksemplet viser udvalgte felter fra en rejse, ikke nødvendigvis et komplet gyldigt POST /api/trips-request. Det præcise requestformat skal verificeres i TripController.
+```
 
-Flights:
-POST /api/trip-draft/flight
-Endpointet bruges til at søge efter flytilbud til en rejsekladde. Flysøgningen integrerer Duffel API og understøtter blandt andet rejsekriterier og ønske om direkte fly.
+Eksemplet viser udvalgte oplysninger fra en rejse.
 
-Weather, hotels and other functionality:
-Projektet har desuden komponenter til vejr, hoteller, destinationer, budget og aktiviteter. De præcise URL'er og HTTP-metoder bør indsættes ud fra den seneste kode, frem for at dokumentere planlagte endpoints som færdigimplementerede.
+### Flights
 
-Test af API'et:
-API'et kan testes med eksempelvis curl eller Postman. Under lokal udvikling har backend kørt på:
+| Metode | Endpoint | Formål |
+|---|---|---|
+| POST | `/api/trip-draft/flight` | Søg efter flytilbud til en rejsekladde |
+
+Flysøgningen integrerer Duffel API og anvender rejsekriterier som destination, datoer og antal rejsende.
+
+### Hotels
+
+Hotelmodulet håndterer søgning efter hoteltilbud samt valg og lagring af hoteloplysninger på en rejse.
+
+Hoteltilbuddene anvender fiktive testdata, som gør det muligt at demonstrere funktionaliteten uden en ekstern hotelbookingstjeneste.
+
+### Destinations and Experiences
+
+Destinationsmodulet understøtter søgning efter destinationer og hentning af inspirationsmateriale.
+
+Oplevelser kan filtreres efter kategorier, og relevante aktiviteter kan tilføjes til en rejseplan.
+
+Et eksempel på et endpoint til kategorifiltrering er:
+
+```http
+GET /api/destinations/OSL/experiences?categories=sevaerdigheder
+```
+
+### Weather
+
+Vejrmodulet integrerer Open-Meteo og gør det muligt at hente vejroplysninger for destinationer.
+
+Et eksempel på et endpoint til vejrafhængige anbefalinger er:
+
+```http
+GET /api/weather/destinations/OSL/recommendations
+```
+
+### HTTP-statuskoder
+
+API'et anvender HTTP-statuskoder til at vise resultatet af en forespørgsel.
+
+| Statuskode | Betydning |
+|---|---|
+| 200 OK | Forespørgslen blev gennemført |
+| 201 Created | En ressource blev oprettet |
+| 400 Bad Request | Ugyldigt input |
+| 401 Unauthorized | Manglende eller ugyldig autentificering |
+| 404 Not Found | Ressourcen blev ikke fundet |
+| 409 Conflict | Konflikt med eksisterende data |
+| 502 Bad Gateway | Problem ved kommunikation med en ekstern tjeneste |
+
+## 9. User Stories
+
+Projektets funktionalitet er udviklet med udgangspunkt i følgende user stories.
+
+| US | Funktionalitet |
+|---|---|
+| US1 | Opret konto og login |
+| US2 | Søg efter destinationer |
+| US3 | Se destinationsinformation og inspiration |
+| US4 | Opret rejse og angiv rejseoplysninger |
+| US5 | Søg efter fly |
+| US6 | Sammenlign flyafgange |
+| US7 | Gem fly på rejsen |
+| US8 | Søg efter hoteller |
+| US9 | Sammenlign og vælg hotel |
+| US10 | Se anbefalede oplevelser |
+| US11 | Filtrer inspiration efter interesser |
+| US12 | Tilføj oplevelser til rejseplanen |
+| US13 | Opret og administrer egne aktiviteter |
+| US14 | Se samlet rejseplan og budget |
+| US15 | Se vejrdata og relevante anbefalinger |
+
+User stories har fungeret som grundlag for implementering, test og videreudvikling af projektet.
+
+## 10. Test og kvalitetssikring
+
+Der er arbejdet med både automatiserede tests og manuelle HTTP-tests for at kontrollere applikationens funktionalitet.
+
+### Automatiserede tests
+
+Projektet anvender JUnit til at teste centrale dele af backendapplikationen.
+
+Testarbejdet omfatter blandt andet:
+
+- Brugerregistrering og login
+- Autentificering og adgangskontrol
+- Validering af brugerinput
+- Databaseoperationer
+- Rejseoplysninger og relationer
+- Fejlhåndtering
+- Integration mellem applikationens komponenter
+
+Ved den senest gennemgåede testkørsel bestod 54 tests.
+
+### HTTP-tests
+
+REST API'et er desuden blevet testet gennem HTTP-requests.
+
+Testene har blandt andet omfattet:
+
+- Oprettelse af brugere
+- Login og logout
+- Adgang med og uden autentificering
+- Destinationssøgning
+- Oprettelse og hentning af rejser
+- Flysøgning
+- Hotelsøgning
+- Tilføjelse og fjernelse af hotel
+- Oplevelser og aktiviteter
+- Rejseplan og budget
+- Vejroplysninger
+- Ugyldige datoer og datatyper
+- Manglende eller ugyldige oplysninger
+
+Testene har været en vigtig del af udviklingsprocessen og har gjort det lettere at opdage fejl ved ændringer i applikationen.
+
+## 11. Deployment
+
+Travel Planner er deployet på en DigitalOcean-server med Ubuntu og Docker.
+
+Applikationen og PostgreSQL-databasen kører i separate containere.
+
+Denne opsætning gør det muligt at administrere backend og database hver for sig og giver et mere ensartet kørselsmiljø.
+
+### DigitalOcean
+
+Den deployede backend er tilgængelig på:
+
+http://157.230.115.167
+
+API'et kan testes ved at sende HTTP-requests til de relevante endpoints.
+
+### Docker
+
+Docker anvendes til at containerisere applikationen og databasen.
+
+Containeropsætningen gør det lettere at håndtere afhængigheder og konfigurere applikationens kørselsmiljø.
+
+### GitHub Actions
+
+Projektet anvender GitHub Actions til automatiserede workflows i udviklingsprocessen.
+
+Der er blandt andet arbejdet med Maven, Docker og deployment af Hugo-portfolioen.
+
+## 12. Udviklingsproces
+
+Travel Planner er udviklet gradvist gennem semesteret.
+
+Projektet begyndte med brugerregistrering, login og grundlæggende databasefunktionalitet.
+
+Derefter blev destinationssøgning og oprettelse af rejser implementeret.
+
+Efterfølgende blev systemet udvidet med eksterne API'er til flysøgning, vejrdata og destinationsinformation samt funktioner til hoteller, aktiviteter og budget.
+
+Undervejs blev datamodellen videreudviklet for at understøtte de nye funktioner.
+
+Den sidste del af arbejdet har blandt andet fokuseret på automatiserede tests, fejlhåndtering, Docker og deployment på DigitalOcean.
+
+### Udfordringer og læring
+
+**Eksterne API'er**
+
+Arbejdet med eksterne API'er har krævet forståelse for HTTP-kommunikation, JSON og håndtering af data fra forskellige tjenester.
+
+**Databasedesign**
+
+Udvidelsen af datamodellen har vist, hvordan ændringer i databasearkitekturen kan påvirke flere dele af applikationen.
+
+**Sikkerhed**
+
+Implementeringen af autentificering og adgangskontrol har givet erfaring med beskyttelse af brugeroplysninger og kontrol af adgang til personlige rejser.
+
+**Deployment**
+
+Opsætningen på DigitalOcean har givet praktisk erfaring med Docker, miljøvariabler, containere og databaseforbindelser.
+
+**Test**
+
+Arbejdet med automatiserede tests og HTTP-tests har gjort det lettere at kontrollere funktionalitet og opdage fejl under udviklingen.
+
+## 13. Lokal opsætning
+
+### Forudsætninger
+
+For at køre projektet lokalt kræves:
+
+- Java
+- Maven
+- PostgreSQL
+- Relevante miljøvariabler
+- API-nøgler til de integrationer, der kræver adgang
+
+### Opsætning
+
+1. Klon projektets backend-repository fra GitHub.
+2. Opret en PostgreSQL-database til Travel Planner.
+3. Konfigurer databaseforbindelsen.
+4. Tilføj de nødvendige miljøvariabler til databaseadgang, autentificering og eksterne API'er.
+5. Start applikationen gennem projektets main-klasse eller Maven.
+6. Test REST API'et med eksempelvis IntelliJ HTTP Client, Postman eller curl.
+
+Under lokal udvikling har API'et været tilgængeligt på:
+
+```text
 http://localhost:7070
-Enkelte endpoints kræver en aktiv login-session. På serveren er API'et tidligere testet via HTTP-requests, blandt andet registrering, login og hentning af rejser.
+```
 
-User Stories:
-De centrale brugerbehov i Travel Planner omfatter
-US1 – Opret konto og login: Oprette en konto og logge ind for at gemme og administrere personlige rejser.
-US2 – Søg efter destination: Søge efter destinationer ved hjælp af by eller land.
-US3 – Se destination og inspiration: Se beskrivelser, billeder og populære områder for en destination.
-US4 – Opret rejse og vælg datoer: Oprette en rejse med destination, startdato, slutdato og budget.
-US5 – Søg efter fly: Søge efter fly ud fra afrejselufthavn, destination og rejsedatoer.
-US6 – Sammenlign flyafgange: Sammenligne fly ud fra blandt andet pris, flyselskab og rejsetid.
-US7 – Gem fly på rejsen: Vælge og gemme flyafgange som en del af rejseplanen.
-US8 – Søg efter hoteller: Søge efter hoteller ud fra destination og rejsedatoer.
-US9 – Sammenlign og vælg hotel: Sammenligne hoteloplysninger og gemme et valgt hotel på rejsen.
-US10 – Se anbefalede oplevelser: Få inspiration til seværdigheder og oplevelser på destinationen.
-US11 – Filtrer inspiration efter interesser: Filtrere anbefalinger efter eksempelvis mad, natur og shopping.
-US12 – Gem inspiration i rejseplanen: Tilføje anbefalede oplevelser til en personlig rejseplan.
-US13 – Opret og administrer egne aktiviteter: Oprette, redigere og slette egne aktiviteter.
-US14 – Se samlet itinerary og budget: Se rejseplanen dag for dag og få overblik over planlagte udgifter.
-US15 – Se vejr og relevante forslag: Se vejroplysninger og få inspiration til aktiviteter ud fra vejret.
-Status: User stories beskriver både gennemførte og planlagte funktioner. Listen er projektets målsætninger og må ikke forveksles med en liste over fuldt implementerede endpoints. De faktisk implementerede funktioner er beskrevet i API Documentation og øvrige tekniske afsnit.
+### Kør tests
 
-Development Notes
-Udviklingsproces:
-Projektet er udviklet gradvist: først med brugerregistrering og login, derefter destinations- og rejsefunktioner, integration til eksterne API'er, udbygning af datamodellen, automatiserede tests og deployment.
-Undervejs er datamodellen blevet udvidet fra mere samlede rejseoplysninger til særskilte tabeller for blandt andet fly, hotel og budget. Det har krævet justeringer i både entities, DAO'er og controllers.
+Projektets automatiserede tests kan køres gennem IntelliJ eller Maven.
 
-Test og kvalitet:
-Der er skrevet automatiserede tests til projektet. Ved den senest gennemgåede testkørsel bestod 54 tests. Det viser, at de dækkede scenarier fungerede på testtidspunktet, men erstatter ikke sikkerhedstest, belastningstest eller kontrol af hele produktionsmiljøet.
+```bash
+mvn test
+```
 
-Udfordringer og læring:
-•	Integration: Eksterne API'er bruger egne dataformater og kan fejle uafhængigt af backend. Det kræver konvertering af data og håndtering af fejl.
-•	Databasedesign: Ændringer i relationer påvirker flere lag i applikationen og kræver omtanke ved migrering.
-•	Autentificering: Det er nødvendigt at adskille identifikation af en bruger fra kontrollen af, hvilke rejser brugeren må tilgå.
-•	Deployment: Opsætning på DigitalOcean med Docker kræver forståelse for miljøvariabler, containere, netværk og databaseforbindelser.
-•	Test: Automatiserede tests hjælper med at opdage regressioner, når en eksisterende funktion ændres.
+For at gennemføre Maven-build og verificering:
 
-Lokal opsætning:
-Forudsætninger: Java, Maven og PostgreSQL samt nødvendige API-nøgler til de integrationer, der ønskes testet.
-1. Klon projektet fra GitHub: https://github.com/Melissabekirova04/Portifolio
-2. Opret en lokal PostgreSQL-database og en separat testdatabase efter projektets konfiguration.
-3. Opsæt de miljøvariabler, som projektets konfigurationsklasser læser (herunder database-login og relevante API-nøgler). De præcise variabelnavne skal verificeres i kildekoden.
-4. Start applikationen gennem projektets main-klasse eller Maven-opsætning.
-5. Test API'et på den port, der er angivet i konfigurationen (tidligere 7070 lokalt).
-6. Kør testene via projektets Maven-testopsætning.
-   Sikkerhed: Adgangskoder, databasecredentials og API-nøgler må ikke lægges i README'en eller pushes til GitHub.
+```bash
+mvn clean verify
+```
 
+Adgangskoder, databaseoplysninger og API-nøgler skal opbevares som miljøvariabler og må ikke offentliggøres i GitHub-repositoryet.
+
+## 14. Mulig videreudvikling
+
+Travel Planner er udviklet som et backendprojekt.
+
+En naturlig videreudvikling vil være at udvikle en frontend, hvor brugeren kan planlægge og administrere sine rejser gennem en grafisk brugerflade.
+
+Andre muligheder for videreudvikling er:
+
+- Integration af live hoteldata
+- Udvidelse af destinationsudvalget
+- Mere detaljeret budgetstyring
+- Flere kategorier af aktiviteter
+- Personlige anbefalinger baseret på brugerens interesser
+- Forbedret visualisering af rejseplanen
+
+## 15. Konklusion
+
+Travel Planner har været et projekt, hvor jeg har kunnet samle og anvende flere af de teknologier og metoder, jeg har arbejdet med gennem datamatikeruddannelsen.
+
+Projektet har givet mig erfaring med at udvikle en backendapplikation med REST API, relationsdatabase, autentificering, eksterne API'er, automatiserede tests og deployment.
+
+Særligt arbejdet med at integrere flere selvstændige komponenter har styrket min forståelse af backendudvikling og distribuerede systemer.
+
+Resultatet er en backendapplikation, der danner grundlaget for et samlet rejseplanlægningssystem og kan videreudvikles med en frontend og yderligere funktionalitet.
