@@ -5,7 +5,10 @@ Projektet fokuserer på distribuerede systemer: en klient kommunikerer med et Ja
 
 Links
 GitHub – Travel Planner (backendprojekt): https://github.com/Melissabekirova04/Portifolio
+
 Portfolio-hjemmeside: https://melissabekirova04.github.io/Portifolio/
+
+Deployed-hjemmeside:
 
 Architecture:
 System Overview

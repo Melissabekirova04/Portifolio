@@ -1,11 +1,12 @@
+
 @baseUrl = http://localhost:7070
 @tripId = 5
 
-### 1. Kontrollér at serveren kører — forvent 200
+### 1. Kontrollér at serveren kører
 GET {{baseUrl}}/
 
 
-### 2. Login — forvent 200
+### 2. Login
 POST {{baseUrl}}/api/auth/login
 Content-Type: application/json
 
@@ -17,50 +18,50 @@ Content-Type: application/json
 > {%
     client.global.clear("token");
 
-    if (response.status === 200) {
+    if (response.status === 200 && response.body.token) {
         client.global.set("token", response.body.token);
     }
 %}
 
 
-### 3. Se den bruger, der er logget ind — forvent 200
+### 3. Se den bruger, der er logget ind
 GET {{baseUrl}}/api/auth/me
 Authorization: Bearer {{token}}
 
 
-### 4. Søg efter destinationer i Norge — forvent 200
+### 4. Søg efter destinationer i Norge
 GET {{baseUrl}}/api/destinations?search=Norge
 
 
-### 5. Se mine gemte rejser — forvent 200
+### 5. Se mine gemte rejser
 GET {{baseUrl}}/api/trips
 Authorization: Bearer {{token}}
 
 
-### 6. Se rejseplan og budget — forvent 200
+### 6. Se rejseplan og budget
 GET {{baseUrl}}/api/trips/{{tripId}}/itinerary
 Authorization: Bearer {{token}}
 
 
-### 7. Se rejsens aktiviteter — forvent 200
+### 7. Se rejsens aktiviteter
 GET {{baseUrl}}/api/trips/{{tripId}}/activities
 Authorization: Bearer {{token}}
 
 
-### 8. Se vejret i Oslo — forvent 200, kræver eksternt API
+### 8. Se vejret i Oslo
 GET {{baseUrl}}/api/weather/destinations/OSL
 
 
-### 9. Adgang uden token — forvent 401
+### 9. Adgang uden token
 GET {{baseUrl}}/api/auth/me
 
 
-### 10. Ugyldigt rejse-ID — forvent 400
+### 10. Ugyldigt rejse-ID
 GET {{baseUrl}}/api/trips/abc
 Authorization: Bearer {{token}}
 
 
-### 11. Forkert datatype ved login — forvent 400
+### 11. Forkert datatype ved login
 POST {{baseUrl}}/api/auth/login
 Content-Type: application/json
 
@@ -72,7 +73,7 @@ Content-Type: application/json
 }
 
 
-### 12. Forkert datatype for pris — forvent 400
+### 12. Forkert datatype for pris
 POST {{baseUrl}}/api/trips/{{tripId}}/activities/custom
 Authorization: Bearer {{token}}
 Content-Type: application/json
@@ -86,7 +87,8 @@ Content-Type: application/json
   "notes": ""
 }
 
-### Null som request — forvent 400
+
+### 13. Null som request
 POST {{baseUrl}}/api/trip-draft
 Authorization: Bearer {{token}}
 Content-Type: application/json
@@ -94,7 +96,7 @@ Content-Type: application/json
 null
 
 
-### Gyldig destination — forvent 201
+### 14. Gyldig destination
 POST {{baseUrl}}/api/trip-draft
 Authorization: Bearer {{token}}
 Content-Type: application/json
@@ -104,7 +106,7 @@ Content-Type: application/json
 }
 
 
-### Decimal i antal voksne — forvent 400
+### 15. Decimal i antal voksne
 PUT {{baseUrl}}/api/trip-draft/details
 Authorization: Bearer {{token}}
 Content-Type: application/json
@@ -118,7 +120,7 @@ Content-Type: application/json
 }
 
 
-### Gyldige rejseoplysninger — forvent 200
+### 16. Gyldige rejseoplysninger
 PUT {{baseUrl}}/api/trip-draft/details
 Authorization: Bearer {{token}}
 Content-Type: application/json
@@ -130,3 +132,287 @@ Content-Type: application/json
   "adults": 1,
   "directOnly": false
 }
+
+
+### 17. Søg efter flybilletter med Duffel
+POST {{baseUrl}}/api/flights/search
+Authorization: Bearer {{token}}
+
+### US1.1 - Registrer ny bruger
+POST http://localhost:7070/api/auth/register
+Content-Type: application/json
+
+{
+  "name": "Test Bruger",
+  "email": "us1ny20261029d@example.com",
+  "password": "Test12345!"
+}
+
+### US1.2 - Registrer samme email igen
+POST http://localhost:7070/api/auth/register
+Content-Type: application/json
+
+{
+  "name": "Test Bruger",
+  "email": "us1test20261028@example.com",
+  "password": "Test12345!"
+}
+
+### US1.3 - For kort adgangskode
+POST http://localhost:7070/api/auth/register
+Content-Type: application/json
+
+{
+  "name": "Test Bruger",
+  "email": "us1invalid@example.com",
+  "password": "123"
+}
+
+### US1.4 - Login
+POST http://localhost:7070/api/auth/login
+Content-Type: application/json
+
+{
+  "email": "us1test20261028@example.com",
+  "password": "Test12345!"
+}
+
+> {%
+    if (response.status === 200 && response.body.token) {
+        client.global.set("us1token", response.body.token);
+    }
+%}
+
+### US1.5 - Hent bruger med JWT
+GET http://localhost:7070/api/auth/me
+Authorization: Bearer {{us1token}}
+
+### US1.6 - Hent bruger uden JWT
+GET http://localhost:7070/api/auth/me
+
+### US1.7 - Forkert adgangskode
+POST http://localhost:7070/api/auth/login
+Content-Type: application/json
+
+{
+  "email": "us1test20261028@example.com",
+  "password": "Forkert123!"
+}
+
+### US1.8 - Logout
+POST http://localhost:7070/api/auth/logout
+Authorization: Bearer {{us1token}}
+
+### US2.1 - Søg efter Oslo
+GET http://localhost:7070/api/destinations?search=Oslo
+
+### US2.2 - Søg efter Norge
+GET http://localhost:7070/api/destinations?search=Norge
+
+### US2.3 - Søg efter København
+GET http://localhost:7070/api/destinations?search=K%C3%B8benhavn
+
+### US2.4 - Ukendt destination
+GET http://localhost:7070/api/destinations?search=Tokyo
+
+### US2.5 - Vælg destination
+POST http://localhost:7070/api/trip-draft
+Authorization: Bearer {{us1token}}
+Content-Type: application/json
+
+{
+  "destination": "OSL"
+}
+
+### US2.6 - Ugyldig destination
+POST http://localhost:7070/api/trip-draft
+Authorization: Bearer {{us1token}}
+Content-Type: application/json
+
+{
+  "destination": "XYZ"
+}
+
+### US2.7 - Vælg destination uden JWT
+POST http://localhost:7070/api/trip-draft
+Content-Type: application/json
+
+{
+  "destination": "OSL"
+}
+
+### US3.1 - Hent destinationsinformation om Oslo
+GET http://localhost:7070/api/destinations/OSL
+Accept: application/json
+
+### US3.2 - Hent destinationsinformation om København
+GET http://localhost:7070/api/destinations/CPH
+Accept: application/json
+
+### US3.3 - Ukendt destination
+GET http://localhost:7070/api/destinations/XYZ
+Accept: application/json
+
+### US3.4 - Destination med små bogstaver
+GET http://localhost:7070/api/destinations/osl
+Accept: application/json
+
+### US3.5 - Inspiration uden JWT
+GET http://localhost:7070/api/destinations/ARN
+Accept: application/json
+
+### US4.1 - Start rejsekladde
+POST http://localhost:7070/api/trip-draft
+Authorization: Bearer {{us1token}}
+Content-Type: application/json
+
+{
+  "destination": "OSL"
+}
+
+### US4.2 - Tilføj rejseoplysninger
+PUT http://localhost:7070/api/trip-draft/details
+Authorization: Bearer {{us1token}}
+Content-Type: application/json
+
+{
+  "origin": "CPH",
+  "startDate": "2026-11-20",
+  "endDate": "2026-11-25",
+  "adults": 2,
+  "directOnly": true
+}
+
+### US4.3 - Afrejsedato i fortiden
+PUT http://localhost:7070/api/trip-draft/details
+Authorization: Bearer {{us1token}}
+Content-Type: application/json
+
+{
+  "origin": "CPH",
+  "startDate": "2026-01-10",
+  "endDate": "2026-01-15",
+  "adults": 2,
+  "directOnly": true
+}
+
+### US4.4 - Hjemrejsedato før afrejsedato
+PUT http://localhost:7070/api/trip-draft/details
+Authorization: Bearer {{us1token}}
+Content-Type: application/json
+
+{
+  "origin": "CPH",
+  "startDate": "2026-11-20",
+  "endDate": "2026-11-15",
+  "adults": 2,
+  "directOnly": true
+}
+
+### US4.5 - Samme afrejse- og hjemrejsedato
+PUT http://localhost:7070/api/trip-draft/details
+Authorization: Bearer {{us1token}}
+Content-Type: application/json
+
+{
+  "origin": "CPH",
+  "startDate": "2026-11-20",
+  "endDate": "2026-11-20",
+  "adults": 2,
+  "directOnly": true
+}
+
+### US4.6 - Samme afrejse og destination
+PUT http://localhost:7070/api/trip-draft/details
+Authorization: Bearer {{us1token}}
+Content-Type: application/json
+
+{
+  "origin": "OSL",
+  "startDate": "2026-11-20",
+  "endDate": "2026-11-25",
+  "adults": 2,
+  "directOnly": true
+}
+
+### US4.7 - Ugyldigt antal voksne
+PUT http://localhost:7070/api/trip-draft/details
+Authorization: Bearer {{us1token}}
+Content-Type: application/json
+
+{
+  "origin": "CPH",
+  "startDate": "2026-11-20",
+  "endDate": "2026-11-25",
+  "adults": 0,
+  "directOnly": true
+}
+
+### US4.8 - For mange voksne
+PUT http://localhost:7070/api/trip-draft/details
+Authorization: Bearer {{us1token}}
+Content-Type: application/json
+
+{
+  "origin": "CPH",
+  "startDate": "2026-11-20",
+  "endDate": "2026-11-25",
+  "adults": 10,
+  "directOnly": true
+}
+
+### US4.9 - Decimal i antal voksne
+PUT http://localhost:7070/api/trip-draft/details
+Authorization: Bearer {{us1token}}
+Content-Type: application/json
+
+{
+  "origin": "CPH",
+  "startDate": "2026-11-20",
+  "endDate": "2026-11-25",
+  "adults": 1.5,
+  "directOnly": false
+}
+
+### US4.10 - Forkert datatype for direkte fly
+PUT http://localhost:7070/api/trip-draft/details
+Authorization: Bearer {{us1token}}
+Content-Type: application/json
+
+{
+  "origin": "CPH",
+  "startDate": "2026-11-20",
+  "endDate": "2026-11-25",
+  "adults": 2,
+  "directOnly": "ja"
+}
+
+### US4.11 - Ugyldigt datoformat
+PUT http://localhost:7070/api/trip-draft/details
+Authorization: Bearer {{us1token}}
+Content-Type: application/json
+
+{
+  "origin": "CPH",
+  "startDate": "20-11-2026",
+  "endDate": "2026-11-25",
+  "adults": 2,
+  "directOnly": true
+}
+
+### US4.12 - Manglende afrejsedato
+PUT http://localhost:7070/api/trip-draft/details
+Authorization: Bearer {{us1token}}
+Content-Type: application/json
+
+{
+  "origin": "CPH",
+  "endDate": "2026-11-25",
+  "adults": 2,
+  "directOnly": true
+}
+
+### US4.13 - Kontrollér gemt rejsekladde
+GET http://localhost:7070/api/trip-draft
+Authorization: Bearer {{us1token}}
+Accept: application/json

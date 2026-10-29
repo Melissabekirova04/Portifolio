@@ -158,8 +158,8 @@ public class AuthController {
 
             ctx.json(Map.of(
                     "message",
-                    "Rejsekladden er ryddet. Slet JWT-tokenet "
-                            + "på klienten for at logge ud."
+                    "Du er logget ud. Din rejsekladde er blevet ryddet."
+
             ));
         });
     }

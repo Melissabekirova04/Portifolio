@@ -35,7 +35,7 @@ public class SecurityMiddleware {
                     true, 0, "Bearer ", 0, 7
             )) {
                 throw new UnauthorizedResponse(
-                        "Send et JWT med Authorization: Bearer <token>"
+                        "Du skal være logget ind for at få adgang."
                 );
             }
 

@@ -1,3 +1,4 @@
+
 package org.example.controller;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
@@ -149,7 +150,7 @@ public class DestinationController {
             if (origin.airportCode()
                     .equals(destination.airportCode())) {
                 throw new BadRequestResponse(
-                        "Afrejse og destination skal være forskellige."
+                        "Du skal vælge forskellige lufthavne til afrejse og destination."
                 );
             }
 
@@ -163,13 +164,13 @@ public class DestinationController {
 
             if (startDate.isBefore(today())) {
                 throw new BadRequestResponse(
-                        "Startdatoen må ikke være i fortiden."
+                        "Afrejsedatoen må ikke ligge i fortiden."
                 );
             }
 
             if (!endDate.isAfter(startDate)) {
                 throw new BadRequestResponse(
-                        "Slutdatoen skal ligge efter startdatoen."
+                        "Hjemrejsedatoen skal ligge efter afrejsedatoen."
                 );
             }
 
@@ -177,7 +178,7 @@ public class DestinationController {
 
             if (adults < 1 || adults > 9) {
                 throw new BadRequestResponse(
-                        "Vælg mellem 1 og 9 voksne."
+                        "Du skal vælge mellem 1 og 9 voksne."
                 );
             }
 
@@ -208,15 +209,15 @@ public class DestinationController {
 
             if (search == null) {
                 throw new BadRequestResponse(
-                        "Angiv først datoer og afrejselufthavn "
-                                + "via /api/trip-draft/details."
+                        "Vælg først afrejselufthavn og rejsedatoer "
+                                + "for din rejse."
                 );
             }
 
             if (!destination.airportCode()
                     .equals(search.destination())) {
                 throw new BadRequestResponse(
-                        "Destinationen matcher ikke rejsekladden."
+                        "Destinationen er blevet ændret. Vælg dine rejsedatoer igen."
                 );
             }
 
@@ -226,7 +227,7 @@ public class DestinationController {
 
             if (departureDate.isBefore(today())) {
                 throw new BadRequestResponse(
-                        "Startdatoen er passeret. Vælg nye datoer."
+                        "Afrejsedatoen er passeret. Vælg nye rejsedatoer."
                 );
             }
 
@@ -248,11 +249,11 @@ public class DestinationController {
 
             if (offers.isEmpty()) {
                 message = search.directOnly()
-                        ? "Ingen direkte flytilbud matcher. "
+                        ? "Vi fandt ingen direkte fly til din søgning. "
                         + "Prøv andre datoer eller tillad mellemlandinger."
-                        : "Ingen flytilbud matcher søgningen.";
+                        : "Vi fandt ingen fly til din søgning. Prøv andre datoer.";
             } else {
-                message = "Flytilbud fundet.";
+                message = "Vi har fundet flytilbud til din rejse.";
             }
 
             ctx.json(Map.of(
@@ -271,13 +272,17 @@ public class DestinationController {
                     readRequest(ctx, FlightChoice.class);
 
             if (input.offerId() == null || input.offerId().isBlank()) {
-                throw new BadRequestResponse("offerId mangler.");
+                throw new BadRequestResponse(
+                        "Du skal vælge et flytilbud."
+                );
             }
 
             JsonNode offers = ctx.sessionAttribute("flightOffers");
 
             if (offers == null) {
-                throw new BadRequestResponse("Søg efter fly først.");
+                throw new BadRequestResponse(
+                        "Du skal søge efter fly, før du kan vælge et tilbud."
+                );
             }
 
             JsonNode selectedOffer = null;
@@ -291,7 +296,7 @@ public class DestinationController {
 
             if (selectedOffer == null) {
                 throw new NotFoundResponse(
-                        "Tilbuddet findes ikke i din seneste søgning."
+                        "Flytilbuddet findes ikke længere i din seneste søgning. Søg efter fly igen."
                 );
             }
 
@@ -303,13 +308,13 @@ public class DestinationController {
                 );
             } catch (DateTimeParseException e) {
                 throw new BadGatewayResponse(
-                        "Tilbuddet har en ugyldig udløbstid."
+                        "Vi kunne ikke kontrollere flytilbuddets gyldighed. Prøv at søge igen."
                 );
             }
 
             if (!expiration.isAfter(Instant.now())) {
                 throw new BadRequestResponse(
-                        "Tilbuddet er udløbet. Søg efter fly igen."
+                        "Flytilbuddet er udløbet. Søg efter fly igen."
                 );
             }
 
@@ -345,7 +350,7 @@ public class DestinationController {
 
             if (input == null) {
                 throw new BadRequestResponse(
-                        "Requesten skal indeholde et JSON-objekt."
+                        "Du skal udfylde de nødvendige oplysninger."
                 );
             }
 
@@ -353,7 +358,7 @@ public class DestinationController {
 
         } catch (StreamReadException | MismatchedInputException e) {
             throw new BadRequestResponse(
-                    "Ugyldigt input. Kontrollér JSON-format og datatyper."
+                    "Nogle af oplysningerne er ugyldige. Kontrollér felterne, og prøv igen."
             );
         }
     }
@@ -369,7 +374,7 @@ public class DestinationController {
 
         if (destination == null) {
             throw new BadRequestResponse(
-                    "Vælg først en destination via /api/trip-draft."
+                    "Du skal vælge en destination, før du kan fortsætte."
             );
         }
 
@@ -378,7 +383,9 @@ public class DestinationController {
 
     private Destination findDestination(String code) {
         if (code == null || code.isBlank()) {
-            throw new BadRequestResponse("Lufthavnskode mangler.");
+            throw new BadRequestResponse(
+                    "Du skal vælge en lufthavn fra listen."
+            );
         }
 
         return destinations.stream()
@@ -388,18 +395,26 @@ public class DestinationController {
                 )
                 .findFirst()
                 .orElseThrow(() -> new BadRequestResponse(
-                        "Ukendt lufthavn. Brug /api/destinations."
+                        "Destinationen findes ikke. Vælg en destination fra listen."
                 ));
     }
 
     private LocalDate parseDate(String value, String field) {
+        String label = switch (field) {
+            case "startDate" -> "Afrejsedatoen";
+            case "endDate" -> "Hjemrejsedatoen";
+            default -> "Datoen";
+        };
+
         if (value == null || value.isBlank()) {
-            throw new BadRequestResponse(field + " mangler.");
+            throw new BadRequestResponse(
+                    "Du skal angive " + label.toLowerCase(Locale.ROOT) + "."
+            );
         }
 
         if (!value.matches("\\d{4}-\\d{2}-\\d{2}")) {
             throw new BadRequestResponse(
-                    field + " skal have formatet YYYY-MM-DD."
+                    label + " skal angives i formatet ÅÅÅÅ-MM-DD."
             );
         }
 
@@ -407,7 +422,7 @@ public class DestinationController {
             return LocalDate.parse(value);
         } catch (DateTimeParseException e) {
             throw new BadRequestResponse(
-                    field + " indeholder en ugyldig dato."
+                    label + " er ikke en gyldig dato."
             );
         }
     }
