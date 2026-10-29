@@ -29,7 +29,6 @@ The backend follows a layered architecture with controllers, services, DAOs and 
 
 **Java, Javalin, Hibernate/JPA, PostgreSQL, Maven, Jackson, Password4j, JUnit, Docker and DigitalOcean.**
 
-## Development Journal
 
 
 ## Development Journal

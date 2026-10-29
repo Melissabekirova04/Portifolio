@@ -87,7 +87,7 @@ public class Main {
         itineraryController.registerRoutes(app);
 
         app.get("/", ctx ->
-                ctx.result("Travel Planner API is running!")
+                ctx.result("Welcome to my travel planner!")
         );
 
         // Log metode, sti og statuskode.
