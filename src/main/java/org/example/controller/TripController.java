@@ -30,8 +30,6 @@ import java.util.Map;
 import java.util.Objects;
 
 public class TripController {
-
-    // Fast testkurs, ikke en aktuel valutakurs.
     private static final BigDecimal TEST_EUR_TO_DKK =
             new BigDecimal("7.50");
 
@@ -53,7 +51,6 @@ public class TripController {
 
     public void registerRoutes(Javalin app) {
 
-        // Opret en rejse fra kladden.
         app.post("/api/trips", ctx -> {
             Long userId = SecurityMiddleware.requireUserId(ctx);
 
@@ -116,7 +113,7 @@ public class TripController {
             ctx.status(201).json(toResponse(trip));
         });
 
-        // Hent brugerens rejser.
+
         app.get("/api/trips", ctx -> {
             Long userId = SecurityMiddleware.requireUserId(ctx);
 
@@ -129,7 +126,7 @@ public class TripController {
             ctx.json(response);
         });
 
-        // Hent én af brugerens rejser.
+
         app.get("/api/trips/{id}", ctx -> {
             Long userId = SecurityMiddleware.requireUserId(ctx);
             Long tripId = parseTripId(ctx.pathParam("id"));
@@ -137,7 +134,7 @@ public class TripController {
             ctx.json(toResponse(requireTrip(tripId, userId)));
         });
 
-        // US7: Søg fly til en gemt rejse.
+
         app.post("/api/trips/{id}/flights/search", ctx -> {
             Long userId = SecurityMiddleware.requireUserId(ctx);
             Long tripId = parseTripId(ctx.pathParam("id"));
@@ -181,7 +178,6 @@ public class TripController {
             ));
         });
 
-        // US7: Tilføj eller erstat gemt fly.
         app.put("/api/trips/{id}/flight", ctx -> {
             Long userId = SecurityMiddleware.requireUserId(ctx);
             Long tripId = parseTripId(ctx.pathParam("id"));
@@ -242,7 +238,7 @@ public class TripController {
             ctx.json(toResponse(updated));
         });
 
-        // US7: Fjern gemt fly, og behold hotellet.
+
         app.delete("/api/trips/{id}/flight", ctx -> {
             Long userId = SecurityMiddleware.requireUserId(ctx);
             Long tripId = parseTripId(ctx.pathParam("id"));
@@ -263,7 +259,7 @@ public class TripController {
             ctx.json(toResponse(updated));
         });
 
-        // US9: Sammenlign hoteller til en gemt rejse.
+
         app.post("/api/trips/{id}/hotels/search", ctx -> {
             Long userId = SecurityMiddleware.requireUserId(ctx);
             Long tripId = parseTripId(ctx.pathParam("id"));
@@ -281,7 +277,7 @@ public class TripController {
             ));
         });
 
-        // US9: Tilføj eller erstat hotellet på en gemt rejse.
+
         app.put("/api/trips/{id}/hotel", ctx -> {
             Long userId = SecurityMiddleware.requireUserId(ctx);
             Long tripId = parseTripId(ctx.pathParam("id"));
@@ -316,7 +312,7 @@ public class TripController {
 
                         trip.changeHotel(selectedHotel);
 
-                        // Midlertidig JSON-kopi til eksisterende rejser.
+
                         trip.updateHotelSnapshot(toJson(selected));
 
                         JsonNode hotel = hotelToJson(trip);
@@ -333,7 +329,7 @@ public class TripController {
             ctx.json(response);
         });
 
-        // US9: Fjern hotellet, og behold det gemte fly.
+
         app.delete("/api/trips/{id}/hotel", ctx -> {
             Long userId = SecurityMiddleware.requireUserId(ctx);
             Long tripId = parseTripId(ctx.pathParam("id"));
@@ -423,7 +419,7 @@ public class TripController {
         );
     }
 
-    // Læs først fra TripHotel, og brug gammel JSON som fallback.
+
     private JsonNode hotelToJson(Trip trip) {
         TripHotel hotel = trip.getHotel();
 

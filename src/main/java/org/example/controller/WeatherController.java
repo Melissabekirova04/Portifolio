@@ -22,7 +22,6 @@ public class WeatherController {
 
     public void registerRoutes(Javalin app) {
 
-        // Eksisterende vejr-endpoints.
         app.get("/api/weather/airports", ctx ->
                 ctx.json(weatherService.getAllAirportWeather())
         );
@@ -33,21 +32,21 @@ public class WeatherController {
                 ))
         );
 
-        // Dagens vejr og de kommende syv dage.
+
         app.get("/api/weather/destinations/{code}", ctx ->
                 ctx.json(weatherService.getOverview(
                         ctx.pathParam("code")
                 ))
         );
 
-        // Historiske gennemsnit for årets 12 måneder.
+
         app.get("/api/weather/destinations/{code}/climate", ctx ->
                 ctx.json(weatherService.getClimate(
                         ctx.pathParam("code")
                 ))
         );
 
-        // Prioriter oplevelser efter dagens eller en valgt dags vejr.
+
         app.get(
                 "/api/weather/destinations/{code}/recommendations",
                 ctx -> ctx.json(
@@ -58,7 +57,7 @@ public class WeatherController {
                 )
         );
 
-        // Vejr under planlægningen, før rejsen gemmes.
+
         app.get("/api/trip-draft/weather", ctx -> {
             SecurityMiddleware.requireUserId(ctx);
 
@@ -88,7 +87,7 @@ public class WeatherController {
             ));
         });
 
-        // Vejr og forslag til en allerede gemt rejse.
+
         app.get("/api/trips/{id}/weather", ctx -> {
             Long userId = SecurityMiddleware.requireUserId(ctx);
             Long tripId = parseTripId(ctx.pathParam("id"));

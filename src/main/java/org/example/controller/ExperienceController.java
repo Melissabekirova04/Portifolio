@@ -35,52 +35,51 @@ public class ExperienceController {
             new InterestCategory("familie", "Familie")
     );
 
-    // En oplevelse kan tilhøre flere interessekategorier.
     private static final Map<String, List<String>> INTERESTS =
             Map.ofEntries(
                     Map.entry(
                             "CPH-tivoli",
-                            List.of("sevaerdigheder", "familie")
+                            List.of("serverdigheder", "familie")
                     ),
                     Map.entry(
                             "CPH-nyhavn",
-                            List.of("sevaerdigheder", "mad")
+                            List.of("serverdigheder", "mad")
                     ),
                     Map.entry(
                             "CPH-christiania",
-                            List.of("sevaerdigheder")
+                            List.of("serverdigheder")
                     ),
                     Map.entry(
                             "AAR-aros",
-                            List.of("sevaerdigheder")
+                            List.of("serverdigheder")
                     ),
                     Map.entry(
                             "AAR-den-gamle-by",
-                            List.of("sevaerdigheder", "familie")
+                            List.of("serverdigheder", "familie")
                     ),
                     Map.entry(
                             "AAR-moesgaard",
-                            List.of("sevaerdigheder", "familie")
+                            List.of("serverdigheder", "familie")
                     ),
                     Map.entry(
                             "AAL-utzon",
-                            List.of("sevaerdigheder")
+                            List.of("serverdigheder")
                     ),
                     Map.entry(
                             "AAL-kunsten",
-                            List.of("sevaerdigheder")
+                            List.of("serverdigheder")
                     ),
                     Map.entry(
                             "AAL-zoo",
-                            List.of("sevaerdigheder", "familie")
+                            List.of("serverdigheder", "familie")
                     ),
                     Map.entry(
                             "BLL-legoland",
-                            List.of("sevaerdigheder", "familie")
+                            List.of("serverdigheder", "familie")
                     ),
                     Map.entry(
                             "BLL-lego-house",
-                            List.of("sevaerdigheder", "familie")
+                            List.of("serverdigheder", "familie")
                     ),
                     Map.entry(
                             "BLL-wow-park",
@@ -88,23 +87,23 @@ public class ExperienceController {
                     ),
                     Map.entry(
                             "OSL-opera",
-                            List.of("sevaerdigheder")
+                            List.of("serverdigheder")
                     ),
                     Map.entry(
                             "OSL-vigeland",
-                            List.of("sevaerdigheder", "natur")
+                            List.of("serverdigheder", "natur")
                     ),
                     Map.entry(
                             "OSL-munch",
-                            List.of("sevaerdigheder")
+                            List.of("serverdigheder")
                     ),
                     Map.entry(
                             "BGO-bryggen",
-                            List.of("sevaerdigheder")
+                            List.of("serverdigheder")
                     ),
                     Map.entry(
                             "BGO-floyen",
-                            List.of("natur", "sevaerdigheder")
+                            List.of("natur", "serverdigheder")
                     ),
                     Map.entry(
                             "BGO-fisketorget",
@@ -112,59 +111,59 @@ public class ExperienceController {
                     ),
                     Map.entry(
                             "TRD-nidaros",
-                            List.of("sevaerdigheder")
+                            List.of("serverdigheder")
                     ),
                     Map.entry(
                             "TRD-bakklandet",
-                            List.of("sevaerdigheder", "mad")
+                            List.of("serverdigheder", "mad")
                     ),
                     Map.entry(
                             "TRD-rockheim",
-                            List.of("sevaerdigheder")
+                            List.of("serverdigheder")
                     ),
                     Map.entry(
                             "SVG-gamle-stavanger",
-                            List.of("sevaerdigheder")
+                            List.of("serverdigheder")
                     ),
                     Map.entry(
                             "SVG-oliemuseum",
-                            List.of("sevaerdigheder")
+                            List.of("serverdigheder")
                     ),
                     Map.entry(
                             "SVG-kunstmuseum",
-                            List.of("sevaerdigheder")
+                            List.of("serverdigheder")
                     ),
                     Map.entry(
                             "ARN-vasa",
-                            List.of("sevaerdigheder")
+                            List.of("serverdigheder")
                     ),
                     Map.entry(
                             "ARN-skansen",
-                            List.of("sevaerdigheder", "familie")
+                            List.of("serverdigheder", "familie")
                     ),
                     Map.entry(
                             "ARN-gamla-stan",
-                            List.of("sevaerdigheder", "mad")
+                            List.of("serverdigheder", "mad")
                     ),
                     Map.entry(
                             "GOT-liseberg",
-                            List.of("sevaerdigheder", "familie")
+                            List.of("serverdigheder", "familie")
                     ),
                     Map.entry(
                             "GOT-universeum",
-                            List.of("sevaerdigheder", "familie")
+                            List.of("serverdigheder", "familie")
                     ),
                     Map.entry(
                             "GOT-haga",
-                            List.of("sevaerdigheder", "mad")
+                            List.of("serverdigheder", "mad")
                     ),
                     Map.entry(
                             "MMX-malmoehus",
-                            List.of("sevaerdigheder")
+                            List.of("serverdigheder")
                     ),
                     Map.entry(
                             "MMX-vastra-hamnen",
-                            List.of("sevaerdigheder")
+                            List.of("serverdigheder")
                     ),
                     Map.entry(
                             "MMX-ribersborg",
@@ -172,15 +171,15 @@ public class ExperienceController {
                     ),
                     Map.entry(
                             "UME-bildmuseet",
-                            List.of("sevaerdigheder")
+                            List.of("serverdigheder")
                     ),
                     Map.entry(
                             "UME-vasterbotten",
-                            List.of("sevaerdigheder")
+                            List.of("serverdigheder")
                     ),
                     Map.entry(
                             "UME-umedalen",
-                            List.of("sevaerdigheder", "natur")
+                            List.of("serverdigheder", "natur")
                     )
             );
 
@@ -253,12 +252,9 @@ public class ExperienceController {
                 );
             }
 
-            // Filtrene bruges kun til dette svar.
-            // Ingen rejse eller rejsekladde ændres.
             ctx.json(response);
         });
 
-        // Åbn én oplevelse med alle oplysninger.
         app.get("/api/experiences/{id}", ctx -> {
             Experience experience = experienceService
                     .findById(ctx.pathParam("id"))
@@ -327,12 +323,9 @@ public class ExperienceController {
         Set<String> selected = new LinkedHashSet<>();
 
         for (String value : values) {
-            // Understøtter både kommaseparerede kategorier
-            // og gentagne categories-parametre.
             for (String part : value.split(",", -1)) {
                 String category = normalizeCategory(part);
 
-                // Et tomt filter svarer til ingen filtrering.
                 if (category.isBlank()) {
                     continue;
                 }

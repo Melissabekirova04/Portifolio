@@ -43,7 +43,6 @@ public class ItineraryController {
 
     public void registerRoutes(Javalin app) {
 
-        // Hent samlet rejseplan og budget.
         app.get("/api/trips/{id}/itinerary", ctx -> {
             Long userId = SecurityMiddleware.requireUserId(ctx);
             Long tripId = parseTripId(ctx.pathParam("id"));
@@ -56,7 +55,6 @@ public class ItineraryController {
             ctx.json(buildItinerary(trip, activities));
         });
 
-        // Opret eller opdater budgetgrænsen.
         app.put("/api/trips/{id}/budget", ctx -> {
             Long userId = SecurityMiddleware.requireUserId(ctx);
             Long tripId = parseTripId(ctx.pathParam("id"));
@@ -323,8 +321,6 @@ public class ItineraryController {
         JsonNode flight = readJson(trip.getFlightJson());
         JsonNode hotel = readJson(trip.getHotelJson());
 
-        // Fravalgt fly eller hotel tæller som 0 kr.
-        // Et valgt tilbud med ukendt pris giver null.
         BigDecimal flightAmount = BigDecimal.ZERO;
         BigDecimal hotelAmount = BigDecimal.ZERO;
 
@@ -377,7 +373,7 @@ public class ItineraryController {
                     activity.currency()
             );
 
-            // Listen beholder null for ukendte priser.
+
             activityPrices.add(converted);
 
             if (converted == null) {
@@ -398,7 +394,7 @@ public class ItineraryController {
 
         BigDecimal limit = trip.getBudgetAmount();
 
-        // Brug den beregning, som vores unit tests tester.
+
         BudgetResult result = budgetService.calculate(
                 limit,
                 flightAmount,

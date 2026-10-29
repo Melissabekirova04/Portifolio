@@ -29,7 +29,6 @@ public class DestinationController {
 
     private final FlightService flightService = new FlightService();
 
-    // Afvis fx adults: 1.5 og directOnly: "ja".
     private final ObjectMapper mapper = JsonMapper.builder()
             .disable(DeserializationFeature.ACCEPT_FLOAT_AS_INT)
             .disable(MapperFeature.ALLOW_COERCION_OF_SCALARS)
@@ -107,8 +106,6 @@ public class DestinationController {
     );
 
     public void registerRoutes(Javalin app) {
-
-        // Søg på by, land eller lufthavnskode.
         app.get("/api/destinations", ctx -> {
             String search = ctx.queryParam("search");
             String term = normalize(search == null ? "" : search);
@@ -125,7 +122,6 @@ public class DestinationController {
             ctx.json(results);
         });
 
-        // Trin 1: Vælg destination og start en ny kladde.
         app.post("/api/trip-draft", ctx -> {
             TripChoice input = readRequest(ctx, TripChoice.class);
 
@@ -140,7 +136,6 @@ public class DestinationController {
             ctx.status(201).json(destination);
         });
 
-        // Trin 2: Vælg datoer, afrejselufthavn og flytype.
         app.put("/api/trip-draft/details", ctx -> {
             Destination destination = requireDestination(ctx);
             TripDetails input = readRequest(ctx, TripDetails.class);
@@ -200,7 +195,6 @@ public class DestinationController {
             ctx.json(search);
         });
 
-        // Trin 3: Søg efter fly tur/retur.
         app.post("/api/flights/search", ctx -> {
             Destination destination = requireDestination(ctx);
 
@@ -264,7 +258,6 @@ public class DestinationController {
             ));
         });
 
-        // Trin 4: Vælg et tilbud med ud- og hjemrejse.
         app.post("/api/trip-draft/flight", ctx -> {
             requireDestination(ctx);
 
@@ -322,7 +315,6 @@ public class DestinationController {
             ctx.json(selectedOffer);
         });
 
-        // Se destination, rejseoplysninger og valgt fly.
         app.get("/api/trip-draft", ctx -> {
             Destination destination = requireDestination(ctx);
 

@@ -33,7 +33,7 @@ public class TripBudget {
     private String currency;
 
     protected TripBudget() {
-        // Bruges af Hibernate.
+
     }
 
     public TripBudget(Trip trip, BigDecimal maxAmount) {

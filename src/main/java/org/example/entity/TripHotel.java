@@ -83,7 +83,6 @@ public class TripHotel {
     private List<String> amenities = new ArrayList<>();
 
     protected TripHotel() {
-        // Bruges af Hibernate.
     }
 
     public TripHotel(
@@ -124,7 +123,7 @@ public class TripHotel {
         this.amenities = new ArrayList<>(amenities);
     }
 
-    // Opdater det eksisterende hotelvalg.
+
     void updateFrom(TripHotel selected) {
         this.hotelId = selected.hotelId;
         this.name = selected.name;
@@ -146,7 +145,7 @@ public class TripHotel {
         this.amenities.addAll(selected.amenities);
     }
 
-    // Bruges af Trip, når hotelvalget fjernes.
+
     void removeTrip() {
         this.trip = null;
     }

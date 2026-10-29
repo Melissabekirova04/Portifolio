@@ -50,7 +50,6 @@ public class TripFlight {
     private String flightJson;
 
     protected TripFlight() {
-        // Bruges af Hibernate.
     }
 
     public TripFlight(Trip trip, String flightJson) {

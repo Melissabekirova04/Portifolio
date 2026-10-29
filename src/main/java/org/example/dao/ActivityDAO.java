@@ -19,7 +19,6 @@ public class ActivityDAO {
         this.emf = HibernateConfig.getEntityManagerFactory();
     }
 
-    // Opret en aktivitet på en rejse, som brugeren ejer.
     public Activity create(
             Long tripId,
             Long userId,
@@ -47,7 +46,7 @@ public class ActivityDAO {
         }
     }
 
-    // Hent alle aktiviteter på brugerens rejse.
+
     public List<Activity> findAll(Long tripId, Long userId) {
         EntityManager em = emf.createEntityManager();
 
@@ -70,7 +69,7 @@ public class ActivityDAO {
         }
     }
 
-    // Hent en bestemt aktivitet på brugerens rejse.
+
     public Activity findById(
             String activityId,
             Long tripId,
@@ -87,7 +86,7 @@ public class ActivityDAO {
         }
     }
 
-    // Opdater aktivitetens redigerbare oplysninger.
+
     public Activity update(
             String activityId,
             Long tripId,
@@ -119,8 +118,6 @@ public class ActivityDAO {
                     notes
             );
 
-            // Hibernate registrerer ændringerne,
-            // fordi aktiviteten er managed.
             em.getTransaction().commit();
 
             return activity;
@@ -133,7 +130,7 @@ public class ActivityDAO {
         }
     }
 
-    // Slet en aktivitet på brugerens rejse.
+
     public void delete(
             String activityId,
             Long tripId,
@@ -149,8 +146,6 @@ public class ActivityDAO {
             );
 
             Trip trip = activity.getTrip();
-
-            // orphanRemoval på Trip sørger for sletningen.
             trip.removeActivity(activity);
 
             em.getTransaction().commit();
@@ -163,7 +158,7 @@ public class ActivityDAO {
         }
     }
 
-    // Bruges internt af DAO'en med den åbne EntityManager.
+
     private Trip findOwnedTrip(
             EntityManager em,
             Long tripId,

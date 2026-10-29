@@ -28,7 +28,6 @@ public class User {
     private String passwordHash;
 
     protected User() {
-        // Hibernate bruger denne constructor
     }
 
     public User(String name, String email, String passwordHash) {

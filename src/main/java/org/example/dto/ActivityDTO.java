@@ -41,10 +41,6 @@ public record ActivityDTO(
         String priceNotice = source.path("priceNotice")
                 .asText(null);
 
-        /*
-         * En egen aktivitet eller en redigeret aktivitet
-         * bruger den pris, som brugeren selv har angivet.
-         */
         if ("custom".equals(activity.getType())
                 || activity.getUpdatedAt() != null) {
             priceNotice =

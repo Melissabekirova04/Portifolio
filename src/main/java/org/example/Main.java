@@ -90,7 +90,6 @@ public class Main {
                 ctx.result("Welcome to my travel planner!")
         );
 
-        // Log metode, sti og statuskode.
         app.after(ctx ->
                 logger.info(
                         "{} {} -> {}",
@@ -117,7 +116,7 @@ public class Main {
         registerHttpError(app, BadGatewayResponse.class, 502);
         registerHttpError(app, ServiceUnavailableResponse.class, 503);
 
-        // Ugyldigt JSON i en request.
+
         app.exception(StreamReadException.class, (exception, ctx) -> {
             ctx.status(400).json(Map.of(
                     "status", 400,
@@ -125,7 +124,7 @@ public class Main {
             ));
         });
 
-        // Uventede fejl logges med stacktrace.
+
         app.exception(Exception.class, (exception, ctx) -> {
             logger.error(
                     "Uventet fejl ved {} {}",

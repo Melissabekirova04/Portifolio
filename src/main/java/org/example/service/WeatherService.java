@@ -127,7 +127,6 @@ public class WeatherService {
             "ARN-skansen"
     );
 
-    // Hent vejret for alle destinationer med op til fire tråde.
     public List<AirportWeather> getAllAirportWeather() {
         ExecutorService executor = Executors.newFixedThreadPool(4);
 
@@ -146,7 +145,7 @@ public class WeatherService {
         );
 
         try {
-            // Start opgaverne, og vent samlet højst 70 sekunder.
+
             List<Future<AirportWeather>> futures =
                     executor.invokeAll(tasks, 70, TimeUnit.SECONDS);
 
@@ -185,7 +184,7 @@ public class WeatherService {
 
             logger.warn("En vejropgave fejlede.", cause);
 
-            // Bevar fejlstatus fra WeatherApiClient.
+
             if (cause instanceof ServiceUnavailableResponse) {
                 throw new ServiceUnavailableResponse(
                         cause.getMessage()
@@ -203,12 +202,12 @@ public class WeatherService {
             );
 
         } finally {
-            // Forsøg også at stoppe ufærdige opgaver ved fejl.
+
             executor.shutdownNow();
         }
     }
 
-    // Dagens vejr for én destination.
+
     public AirportWeather getWeatherByAirportCode(String code) {
         AirportCity airport = requireAirport(code);
 
@@ -232,7 +231,7 @@ public class WeatherService {
         );
     }
 
-    // Dagens vejr og de kommende syv dage.
+
     public ObjectNode getOverview(String code) {
         AirportCity airport = requireAirport(code);
 
@@ -315,7 +314,7 @@ public class WeatherService {
         return response;
     }
 
-    // Prioriter oplevelser efter en valgt dags prognose.
+
     public ObjectNode getRecommendations(
             String code,
             LocalDate requestedDate
@@ -451,7 +450,7 @@ public class WeatherService {
         return response;
     }
 
-    // Beregn historiske gennemsnit for årets 12 måneder.
+
     public ObjectNode getClimate(String code) {
         AirportCity airport = requireAirport(code);
         String key = airport.airportCode();

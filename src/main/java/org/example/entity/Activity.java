@@ -125,10 +125,7 @@ public class Activity {
         this.updatedAt = Instant.now();
     }
 
-    /*
-     * Kun Trip skal ændre relationen, så begge sider
-     * kan holdes synkroniserede.
-     */
+
     void assignTrip(Trip trip) {
         this.trip = trip;
     }

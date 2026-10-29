@@ -229,7 +229,6 @@ public class ActivityController {
         }
     }
 
-    // Læs JSON og afvis ugyldigt format eller forkert datatype.
     private <T> T readRequest(Context ctx, Class<T> type)
             throws JsonProcessingException {
 

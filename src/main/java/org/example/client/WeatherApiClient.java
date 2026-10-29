@@ -28,7 +28,6 @@ public class WeatherApiClient {
     private final Map<String, CacheEntry> forecastCache =
             new ConcurrentHashMap<>();
 
-    // Dagens vejr og syv dages prognose.
     public JsonNode getWeather(double latitude, double longitude) {
         String key = latitude + "," + longitude;
         CacheEntry cached = forecastCache.get(key);
@@ -71,7 +70,6 @@ public class WeatherApiClient {
         return data;
     }
 
-    // Historiske data til beregning af månedsgennemsnit.
     public JsonNode getHistoricalWeather(
             double latitude,
             double longitude

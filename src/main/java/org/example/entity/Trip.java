@@ -32,11 +32,9 @@ public class Trip {
     @Column(name = "search_json", columnDefinition = "text")
     private String searchJson;
 
-    // Beholdes til eksisterende endpoints og gamle rejser.
     @Column(name = "flight_json", columnDefinition = "text")
     private String flightJson;
 
-    // Beholdes til eksisterende endpoints og gamle rejser.
     @Column(name = "hotel_json", columnDefinition = "text")
     private String hotelJson;
 
@@ -83,7 +81,6 @@ public class Trip {
     private Instant createdAt;
 
     protected Trip() {
-        // Bruges af Hibernate.
     }
 
     public Trip(

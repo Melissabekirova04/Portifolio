@@ -228,9 +228,6 @@ public class TripDAO {
                 );
             }
 
-            // Gem hele flytilbuddet uden at miste detaljer.
-            // Vi kan senere udtrække de enkelte felter
-            // fra FlightService til separate kolonner.
             TripFlight selected = new TripFlight(
                     trip,
                     flightJson

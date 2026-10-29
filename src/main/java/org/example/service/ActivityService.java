@@ -34,7 +34,6 @@ public class ActivityService {
         );
     }
 
-    // Denne constructor kan senere bruges i unit tests.
     public ActivityService(
             ActivityDAO activityDAO,
             TripDAO tripDAO,

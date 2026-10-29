@@ -164,7 +164,6 @@ public class AuthController {
         });
     }
 
-    // Læs JSON og giv 400 ved ugyldigt format eller forkert datatype.
     private <T> T readRequest(Context ctx, Class<T> type)
             throws JsonProcessingException {
 

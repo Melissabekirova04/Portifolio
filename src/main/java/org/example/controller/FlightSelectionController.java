@@ -9,8 +9,6 @@ import java.util.Map;
 public class FlightSelectionController {
 
     public void registerRoutes(Javalin app) {
-
-        // Fjern flyet, men behold destination, datoer og søgeresultater.
         app.delete("/api/trip-draft/flight", ctx -> {
             SecurityMiddleware.requireUserId(ctx);
 

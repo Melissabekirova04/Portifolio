@@ -26,7 +26,6 @@ import java.util.Map;
 
 public class HotelController {
 
-    // Fast testkurs. Ikke en aktuel valutakurs.
     private static final BigDecimal TEST_EUR_TO_DKK =
             new BigDecimal("7.50");
 
@@ -111,7 +110,7 @@ public class HotelController {
             BigDecimal change = selected.totalAmount()
                     .subtract(previousAmount);
 
-            // Beregn svaret, før hotelvalget ændres.
+
             ObjectNode response = summary(ctx, stay, selected);
 
             response.put(
@@ -135,7 +134,6 @@ public class HotelController {
 
             HotelOffer previous = currentHotel(ctx, stay);
 
-            // Beregn svaret uden hotel, før valget fjernes.
             ObjectNode response = summary(ctx, stay, null);
 
             response.put("message", "Hotellet er fjernet.");
@@ -160,7 +158,6 @@ public class HotelController {
             ctx.json(summary(ctx, requireStay(ctx)));
         });
 
-        // Ryd hotelvalg efter en vellykket ændring eller gemning.
         app.after(ctx -> {
             int statusCode = ctx.res().getStatus();
 
@@ -189,7 +186,6 @@ public class HotelController {
         });
     }
 
-    // Læs hotelvalget og afvis ugyldigt JSON eller forkert datatype.
     private HotelChoice readHotelChoice(Context ctx)
             throws JsonProcessingException {
 

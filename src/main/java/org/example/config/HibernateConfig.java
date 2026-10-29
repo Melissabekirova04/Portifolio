@@ -15,7 +15,6 @@ public class HibernateConfig {
     private static EntityManagerFactory emf;
 
     private HibernateConfig() {
-        // Klassen skal ikke oprettes med new.
     }
 
     public static synchronized EntityManagerFactory
