@@ -10,24 +10,19 @@ GET {{baseUrl}}/
 
 
 ### 2. Login
+### Kontrollér Melissa-bruger
+### Sikkerhedstest - Login som Melissa
 POST {{baseUrl}}/api/auth/login
 Content-Type: application/json
 
 {
-  "email": "deploytest@example.com",
-  "password": "Test12345!"
+  "email": "melissa@example.com",
+  "password": "TestRejse2026!"
 }
 
 > {%
     if (response.status === 200 && response.body.token) {
-        client.global.set("token", response.body.token);
-    }
-%}
-
-> {%
-    client.global.clear("token");
-    if (response.status === 200 && response.body.token) {
-        client.global.set("token", response.body.token);
+        client.global.set("melissaToken", response.body.token);
     }
 %}
 
@@ -510,24 +505,18 @@ Accept: application/json
 ### US7 - GEM FLY PÅ REJSEN
 ### ============================================================
 
-### US7.1 - Gem valgt fly
-# Body-feltet skal bekræftes i FlightController/TripController.
-# Her anvendes offerId som kandidat.
-POST {{baseUrl}}/api/trip-draft/flight
-Authorization: Bearer {{us1token}}
-Content-Type: application/json
 
-{
-  "offerId": "{{flightOfferId}}"
-}
-
-
-### US7.2 - Kontrollér gemt fly
-# Forventet: 200, og flight er ikke null.
-GET {{baseUrl}}/api/trip-draft
+### US7 - Søg efter fly
+POST {{baseUrl}}/api/trips/2/flights/search
 Authorization: Bearer {{us1token}}
 Accept: application/json
 
+
+### US7.2 - Kontrollér gemt fly
+# Forventet: 200 OK, og flight er ikke null.
+GET {{baseUrl}}/api/trips/2
+Authorization: Bearer {{us1token}}
+Accept: application/json
 
 ### ============================================================
 ### US8 - SØG EFTER HOTELLER
@@ -701,4 +690,29 @@ Accept: application/json
 GET {{baseUrl}}/api/trips
 Accept: application/json
 
+### Sikkerhedstest - Gem rejse
+POST {{baseUrl}}/api/trips
+Authorization: Bearer {{us1token}}
+Accept: application/json
 
+### Sikkerhedstest - Anden brugers rejse
+GET {{baseUrl}}/api/trips/2
+Authorization: Bearer {{melissaToken}}
+Accept: application/json
+
+### API-test - Wikipedia-billeder til Oslo
+GET {{baseUrl}}/api/destinations/OSL
+Accept: application/json
+
+### API-test - Wikipedia-billeder til Stockholm
+GET {{baseUrl}}/api/destinations/ARN
+Accept: application/json
+
+### API-test - Open-Meteo vejr for Oslo
+GET {{baseUrl}}/api/weather/destinations/OSL
+Accept: application/json
+
+### API-test - Duffel flysøgning
+POST {{baseUrl}}/api/trips/2/flights/search
+Authorization: Bearer {{us1token}}
+Accept: application/json

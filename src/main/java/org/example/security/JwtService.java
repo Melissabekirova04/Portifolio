@@ -13,7 +13,7 @@ import java.util.UUID;
 
 public class JwtService {
 
-    public static final long TOKEN_LIFETIME_SECONDS = 3600;
+    public static final long TOKEN_LIFETIME_SECONDS = 36000;
 
     private static final String ISSUER = "travel-planner";
     private static final String AUDIENCE = "travel-planner-api";
