@@ -200,7 +200,6 @@ Mit ER-diagram kan findes i mappen **`docs`** under filnavnet `TravelPlanner-ERD
 
 Diagrammet er udarbejdet i pgAdmin og viser databasens vigtigste tabeller samt relationerne mellem brugere, rejser, fly, hoteller, budgetter og aktiviteter.
 
-![Travel Planner ER-diagram](docs/TravelPlanner-ERD.png)
 
 ### Centrale entiteter
 
