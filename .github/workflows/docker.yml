@@ -1,5 +1,5 @@
 
-name: DockerHub CI/CD
+name: DockerHub CI/CD and Deploy
 
 on:
   push:
@@ -7,8 +7,55 @@ on:
       - main
   workflow_dispatch:
 
+permissions:
+  contents: read
+
+concurrency:
+  group: travel-planner-deploy
+  cancel-in-progress: false
+
 jobs:
-  docker:
+  test:
+    name: Run Maven tests
+    runs-on: ubuntu-latest
+
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_DB: travelplanner_test
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: testpassword
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres -d travelplanner_test"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Java 25
+        uses: actions/setup-java@v4
+        with:
+          java-version: '25'
+          distribution: temurin
+          cache: maven
+
+      - name: Run tests
+        env:
+          DB_USERNAME: postgres
+          DB_PASSWORD: testpassword
+          DB_URL: jdbc:postgresql://localhost:5432/travelplanner_test
+          JWT_SECRET: "Y2ktdGVzdC1zZWNyZXQtb25seS1ub3QtZm9yLXByb2R1Y3Rpb24tMjAyNg=="
+        run: mvn --batch-mode clean verify
+
+  build-and-deploy:
+    name: Build, push and deploy
+    needs: test
     runs-on: ubuntu-latest
 
     steps:
@@ -31,3 +78,16 @@ jobs:
           platforms: linux/amd64
           push: true
           tags: melissabekirova04/travel-planner:latest
+
+      - name: Deploy to DigitalOcean
+        uses: appleboy/ssh-action@v1.2.0
+        with:
+          host: ${{ secrets.DO_HOST }}
+          username: ${{ secrets.DO_USER }}
+          key: ${{ secrets.DO_SSH_KEY }}
+          script: |
+            set -e
+            cd /root/Portifolio
+            docker compose pull app
+            docker compose up -d --no-deps app
+            docker compose ps app
